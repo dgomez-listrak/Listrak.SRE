@@ -15,12 +15,12 @@ using Microsoft.Extensions.Configuration;
 ////https://teams.microsoft.com/l/channel/19:24d638f4c79941298611e751c92277c4@thread.tacv2/On-Call%2520Alert%2520Log?groupId=ad11c04b-a12d-48f3-b300-a640fac9726c&tenantId=a0479c74-9820-417d-8763-a7b609250f00
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
-    public class TeamsStartNewThreadInTeam : ActivityHandler
+    public class OldTeamsStartNewThreadInTeam : TeamsActivityHandler
     {
         private readonly string _appId;
         private readonly IBotFrameworkHttpAdapter Adapter;
 
-        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
+        public OldTeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
         {
             Adapter = adapter;
             _appId = configuration["MicrosoftAppId"];

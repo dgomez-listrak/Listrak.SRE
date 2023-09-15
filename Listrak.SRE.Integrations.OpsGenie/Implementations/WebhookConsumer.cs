@@ -9,6 +9,10 @@ using Microsoft.AspNetCore.JsonPatch.Internal;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder;
 using Microsoft.BotBuilderSamples.Bots;
+using Microsoft.Bot.Connector.Authentication;
+using Microsoft.Bot.Connector;
+using Microsoft.Bot.Schema;
+using Microsoft.Extensions.Configuration;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
@@ -24,7 +28,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             Bot = bot;
             TeamsThing = teamsThing;
         }
-     
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             var config = new ConsumerConfig
@@ -52,8 +56,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                             var cr = consumer.Consume();
                             Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
 
-                            /// Send to a BotController to produce card
-                       
+                            TeamsThing.SendMessageAsync("","19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
+
 
                         }
                         catch (ConsumeException e)
@@ -75,5 +79,43 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         {
             return Task.CompletedTask;
         }
+    }
+
+    public class TeamsStartNewThreadInTeam:ITeamsStartNewThreadInTeam
+    {
+        private readonly string _appId;
+        private readonly string _appPassword;
+        private readonly string _tenantId;
+        public IBotFrameworkHttpAdapter Adapter { get; }
+
+        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
+        {
+            Adapter = adapter;
+            _appId = configuration["MicrosoftAppId"];
+            _appPassword = configuration["MicrosoftAppPassword"];
+            _tenantId = configuration["MicrosoftAppTenantId"];
+        }
+        public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
+        {
+            var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
+            var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
+
+            var activity = new Activity
+            {
+                Type = ActivityTypes.Message,
+                Text = message,
+                ServiceUrl = serviceUrl,
+                ChannelId = channelId,
+                Conversation = new ConversationAccount(id: channelId)
+            };
+
+            await connectorClient.Conversations.SendToConversationAsync(activity);
+        }
+
+    }
+
+    public interface ITeamsStartNewThreadInTeam
+    {
+        Task SendMessageAsync(string serviceUrl, string channelId, string message);
     }
 }
