@@ -5,7 +5,7 @@ using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Logging;
 
-namespace Listrak.SRE.Integrations.OpsGenie
+namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
     public class AdapterWithErrorHandler : CloudAdapter
     {
