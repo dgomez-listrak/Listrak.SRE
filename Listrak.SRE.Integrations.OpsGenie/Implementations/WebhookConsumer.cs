@@ -20,9 +20,9 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
     {
         private readonly IBotFrameworkHttpAdapter Adapter;
         private readonly IBot Bot;
-        private readonly TeamsStartNewThreadInTeam TeamsThing;
+        private readonly ITeamsStartNewThreadInTeam TeamsThing;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, TeamsStartNewThreadInTeam teamsThing)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing)
         {
             Adapter = adapter;
             Bot = bot;
