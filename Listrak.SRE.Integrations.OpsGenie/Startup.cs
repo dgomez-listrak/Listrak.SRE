@@ -31,7 +31,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddTransient<IBot, AdaptiveCardsBot>();
             services.AddSingleton<IWebHookProducer, WebhookProducer>();
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
-            services.AddSingleton<ITeamsStartNewThreadInTeam, TeamsStartNewThreadInTeam>();
+            //services.AddSingleton<ITeamsStartNewThreadInTeam, TeamsStartNewThreadInTeam>();
             //services.AddTransient<IBot, TeamsConversationBot>();
         }
 

@@ -18,16 +18,16 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
     public class WebhookConsumer : IWebhookConsumer
     {
-        private readonly IBotFrameworkHttpAdapter Adapter;
-        private readonly IBot Bot;
-        private readonly ITeamsStartNewThreadInTeam TeamsThing;
+        //private readonly IBotFrameworkHttpAdapter Adapter;
+        //private readonly IBot Bot;
+        //private readonly ITeamsStartNewThreadInTeam TeamsThing;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing)
+        /*public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing)
         {
             Adapter = adapter;
             Bot = bot;
             TeamsThing = teamsThing;
-        }
+        }*/
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
