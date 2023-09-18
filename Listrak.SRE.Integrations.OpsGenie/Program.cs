@@ -26,9 +26,9 @@ namespace Listrak.SRE.Integrations.OpsGenie
                         logging.AddConsole();
                     });
                     webBuilder.UseStartup<Startup>();
-                }).ConfigureServices((context, collection) =>
+                })/*.ConfigureServices((context, collection) =>
                 {
                     collection.AddHostedService<WebhookConsumer>();
-                });
+                })*/;
     }
 }
