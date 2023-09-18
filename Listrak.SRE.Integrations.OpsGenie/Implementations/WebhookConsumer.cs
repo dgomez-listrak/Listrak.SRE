@@ -54,7 +54,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         try
                         {
                             var cr = consumer.Consume();
-                            Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
+                           // Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
 
                             //TeamsThing.SendMessageAsync("","19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
 
