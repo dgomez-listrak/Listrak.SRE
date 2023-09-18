@@ -54,7 +54,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         try
                         {
                             var cr = consumer.Consume();
-                           // Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
+                            Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
 
                             //TeamsThing.SendMessageAsync("","19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
 
@@ -81,41 +81,41 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         }
     }
 
-    public class TeamsStartNewThreadInTeam:ITeamsStartNewThreadInTeam
-    {
-        private readonly string _appId;
-        private readonly string _appPassword;
-        private readonly string _tenantId;
-        public IBotFrameworkHttpAdapter Adapter { get; }
+    //public class TeamsStartNewThreadInTeam:ITeamsStartNewThreadInTeam
+    //{
+    //    private readonly string _appId;
+    //    private readonly string _appPassword;
+    //    private readonly string _tenantId;
+    //    public IBotFrameworkHttpAdapter Adapter { get; }
 
-        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
-        {
-            Adapter = adapter;
-            _appId = configuration["MicrosoftAppId"];
-            _appPassword = configuration["MicrosoftAppPassword"];
-            _tenantId = configuration["MicrosoftAppTenantId"];
-        }
-        public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
-        {
-            var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
-            var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
+    //    public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
+    //    {
+    //        Adapter = adapter;
+    //        _appId = configuration["MicrosoftAppId"];
+    //        _appPassword = configuration["MicrosoftAppPassword"];
+    //        _tenantId = configuration["MicrosoftAppTenantId"];
+    //    }
+    //    public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
+    //    {
+    //        var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
+    //        var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-            var activity = new Activity
-            {
-                Type = ActivityTypes.Message,
-                Text = message,
-                ServiceUrl = serviceUrl,
-                ChannelId = channelId,
-                Conversation = new ConversationAccount(id: channelId)
-            };
+    //        var activity = new Activity
+    //        {
+    //            Type = ActivityTypes.Message,
+    //            Text = message,
+    //            ServiceUrl = serviceUrl,
+    //            ChannelId = channelId,
+    //            Conversation = new ConversationAccount(id: channelId)
+    //        };
 
-            await connectorClient.Conversations.SendToConversationAsync(activity);
-        }
+    //        await connectorClient.Conversations.SendToConversationAsync(activity);
+    //    }
 
-    }
+    //}
 
-    public interface ITeamsStartNewThreadInTeam
-    {
-        Task SendMessageAsync(string serviceUrl, string channelId, string message);
-    }
+    //public interface ITeamsStartNewThreadInTeam
+    //{
+    //    Task SendMessageAsync(string serviceUrl, string channelId, string message);
+    //}
 }
