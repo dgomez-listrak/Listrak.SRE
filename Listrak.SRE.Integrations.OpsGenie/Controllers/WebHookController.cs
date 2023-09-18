@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -27,20 +28,30 @@ namespace Listrak.SRE.Integrations.OpsGenie
         [HttpPost("receive")]
         public async Task<IActionResult> ReceiveWebhook()
         {
-            using (var reader = new StreamReader(Request.Body))
+            try
             {
-                string data = await reader.ReadToEndAsync();
-
-                if (string.IsNullOrEmpty(data))
+                using (var reader = new StreamReader(Request.Body))
                 {
-                    return BadRequest();
-                }
+                    string data = await reader.ReadToEndAsync();
 
-                //await _adapter.ProcessAsync(Request, Response, _bot);
-                // Now, you have the raw JSON in 'data' variable. Process it as needed.
-                // Send to EvenTHub
-                await _webHookProducer.Produce(data);
-                return Ok("thanks");
+                    if (string.IsNullOrEmpty(data))
+                    {
+                        return BadRequest();
+                    }
+
+                    //await _adapter.ProcessAsync(Request, Response, _bot);
+                    // Now, you have the raw JSON in 'data' variable. Process it as needed.
+                    // Send to EvenTHub
+                    await _webHookProducer.Produce(data);
+                    return Ok("thanks");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                throw;
             }
         }
 
