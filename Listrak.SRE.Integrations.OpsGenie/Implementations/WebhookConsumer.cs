@@ -47,6 +47,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
                 consumer.Subscribe("opsgeniewebhook");
                 Console.WriteLine("Listening...");
+                System.Diagnostics.Trace.WriteLine("Listening to Kafka");
                 try
                 {
                     while (!cancellationToken.IsCancellationRequested)
@@ -54,10 +55,10 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         try
                         {
                             var cr = consumer.Consume();
-                            Console.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
-
+                            System.Diagnostics.Trace.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
+                            System.Diagnostics.Trace.WriteLine("Sending to teams...");
                             TeamsThing.SendMessageAsync("","19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
-
+                            System.Diagnostics.Trace.WriteLine("Sent to teams");
 
                         }
                         catch (ConsumeException e)
@@ -69,6 +70,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                 catch (ConsumeException e)
                 {
                     Console.WriteLine($"Error occured: {e.Error.Reason}");
+                    System.Diagnostics.Trace.WriteLine($"Error occured: {e.Error.Reason}");
                     consumer.Close();
                 }
                 return Task.CompletedTask;
@@ -97,19 +99,28 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         }
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
-            var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
-            var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-
-            var activity = new Activity
+            System.Diagnostics.Trace.WriteLine("SenndMessageAsync to Teams");
+            try
             {
-                Type = ActivityTypes.Message,
-                Text = message,
-                ServiceUrl = serviceUrl,
-                ChannelId = channelId,
-                Conversation = new ConversationAccount(id: channelId)
-            };
+                var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
+                var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-            await connectorClient.Conversations.SendToConversationAsync(activity);
+                var activity = new Activity
+                {
+                    Type = ActivityTypes.Message,
+                    Text = message,
+                    ServiceUrl = serviceUrl,
+                    ChannelId = channelId,
+                    Conversation = new ConversationAccount(id: channelId)
+                };
+
+                await connectorClient.Conversations.SendToConversationAsync(activity);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(ex.Message);
+            }
+
         }
 
     }

@@ -32,7 +32,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IWebHookProducer, WebhookProducer>();
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
             services.AddSingleton<ITeamsStartNewThreadInTeam, TeamsStartNewThreadInTeam>();
-            services.AddTransient<IBot, TeamsConversationBot>();
+            //services.AddTransient<IBot, TeamsConversationBot>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
