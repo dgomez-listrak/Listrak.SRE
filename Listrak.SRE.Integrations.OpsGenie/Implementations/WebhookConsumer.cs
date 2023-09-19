@@ -99,7 +99,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         }
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
-            System.Diagnostics.Trace.WriteLine("SenndMessageAsync to Teams");
+            System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
             try
             {
                 var credentials = new MicrosoftAppCredentials(_appId, _appPassword);

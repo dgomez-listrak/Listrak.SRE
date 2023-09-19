@@ -45,13 +45,14 @@ namespace Listrak.SRE.Integrations.OpsGenie
             Random r = new Random();
             string message = turnContext.Activity.Text;
             var cardAttachment = CreateAdaptiveCardAttachment(_cards[r.Next(_cards.Length)]);
+            var serviceUrl = turnContext.Activity.ServiceUrl;
 
             //turnContext.Activity.Attachments = new List<Attachment>() { cardAttachment };
             await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
             await turnContext.SendActivityAsync(MessageFactory.Text("Please enter any text to see another card."), cancellationToken);
             if (!string.IsNullOrEmpty(message))
             {
-                await turnContext.SendActivityAsync(MessageFactory.Text($"Dynamic response: {message}"), cancellationToken);
+                await turnContext.SendActivityAsync(MessageFactory.Text($"Dynamic response: {message} - URL: {serviceUrl}"), cancellationToken);
             }
         }
 
