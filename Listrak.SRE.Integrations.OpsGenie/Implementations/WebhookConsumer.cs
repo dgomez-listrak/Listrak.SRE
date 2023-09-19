@@ -57,7 +57,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                             var cr = consumer.Consume();
                             System.Diagnostics.Trace.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
                             System.Diagnostics.Trace.WriteLine("Sending to teams...");
-                            TeamsThing.SendMessageAsync("","19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
+                            TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
                             System.Diagnostics.Trace.WriteLine("Sent to teams");
 
                         }
