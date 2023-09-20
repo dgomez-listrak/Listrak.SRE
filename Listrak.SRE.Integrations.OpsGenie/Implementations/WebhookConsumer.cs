@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
@@ -13,6 +14,9 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
+using System.IO;
+using Microsoft.Bot.Schema.Teams;
+using Newtonsoft.Json;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
@@ -57,7 +61,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                             var cr = consumer.Consume();
                             System.Diagnostics.Trace.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
                             System.Diagnostics.Trace.WriteLine("Sending to teams...");
-                            TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2",cr.Message.Value);
+                            TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2", cr.Message.Value);
                             System.Diagnostics.Trace.WriteLine("Sent to teams");
 
                         }
@@ -90,6 +94,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly string _tenantId;
         public IBotFrameworkHttpAdapter Adapter { get; }
 
+        private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
+
         public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
         {
             Adapter = adapter;
@@ -97,30 +103,57 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             _appPassword = configuration["MicrosoftAppPassword"];
             _tenantId = configuration["MicrosoftAppTenantId"];
         }
+
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
+            CancellationToken cancellationToken = CancellationToken.None;
             System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
             try
             {
                 var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
                 var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-                var activity = new Activity
+                var conversationParameters = new ConversationParameters
                 {
-                    Type = ActivityTypes.Message,
-                    Text = message,
-                    ServiceUrl = serviceUrl,
-                    ChannelId = channelId,
-                    Conversation = new ConversationAccount(id: channelId)
+                    ChannelData = new TeamsChannelData
+                    {
+                        Channel = new ChannelInfo(channelId),
+                    },
+                    IsGroup = true,
+                    Activity = (Activity)Activity.CreateMessageActivity(),
+                    TenantId = _tenantId
                 };
 
-                await connectorClient.Conversations.SendToConversationAsync(activity);
+                conversationParameters.Activity.Attachments = new List<Attachment>
+                {
+                    CreateAdaptiveCardAttachment(_card)
+                };
+
+                conversationParameters.Activity.Text = message;
+
+                var conversationResource = await connectorClient.Conversations
+                    .CreateConversationAsync(conversationParameters);
+
+                var conversationId = conversationResource.Id;
+
+                // Do something with conversationId if needed
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.WriteLine(ex.Message);
             }
+        }
 
+
+        private Attachment CreateAdaptiveCardAttachment(string filePath)
+        {
+            var adaptiveCardJson = File.ReadAllText(filePath);
+            var adaptiveCardAttachment = new Attachment()
+            {
+                ContentType = "application/vnd.microsoft.card.adaptive",
+                Content = JsonConvert.DeserializeObject(adaptiveCardJson),
+            };
+            return adaptiveCardAttachment;
         }
 
     }
