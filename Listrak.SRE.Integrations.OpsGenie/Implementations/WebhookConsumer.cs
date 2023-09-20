@@ -64,26 +64,26 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         {
                             var cr = consumer.Consume();
                             _logger.LogInformation($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
-                            System.Diagnostics.Trace.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
-                            _logger.LogInformation("Sending to teams...");
-                            System.Diagnostics.Trace.WriteLine("Sending to teams...");
+                            System.Diagnostics.Trace.WriteLine($"[WebhookConsumer] Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
+                            _logger.LogInformation("[WebhookConsumer] Sending to teams...");
+                            System.Diagnostics.Trace.WriteLine("[WebhookConsumer] Calling SendMessageAsync...");
                             TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2", cr.Message.Value);
                             System.Diagnostics.Trace.WriteLine("Sent to teams");
-                            _logger.LogInformation("Sent to teams...");
+                            _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
 
                         }
                         catch (ConsumeException e)
                         {
-                            Console.WriteLine($"Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
-                            _logger.LogError($"Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
+                            Console.WriteLine($"[WebhookConsumer] Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
+                            _logger.LogError($"[WebhookConsumer] Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
                         }
                     }
                 }
                 catch (ConsumeException e)
                 {
-                    Console.WriteLine($"Error occured: {e.Error.Reason}");
-                    System.Diagnostics.Trace.WriteLine($"Error occured: {e.Error.Reason}");
-                    _logger.LogError($"Error occured: {e.Error.Reason}");
+                    Console.WriteLine($"[WebhookConsumer] Error occured: {e.Error.Reason}");
+                    System.Diagnostics.Trace.WriteLine($"[WebhookConsumer] Error occured: {e.Error.Reason}");
+                    _logger.LogError($"[WebhookConsumer] Error occured: {e.Error.Reason}");
                     consumer.Close();
                 }
                 return Task.CompletedTask;
@@ -117,9 +117,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
-            _logger.LogInformation("Sending message to teams...");
             CancellationToken cancellationToken = CancellationToken.None;
-            System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
+            _logger.LogInformation("[TeamsStartNewThreadInTeam]  SendMessageAsync to Teams Begin");
             try
             {
                 var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
@@ -144,16 +143,14 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                 conversationParameters.Activity.Text = message;
 
                 var conversationResource = await connectorClient.Conversations.CreateConversationAsync(conversationParameters);
-                _logger.LogInformation("Message sent...hopefully");
+                _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
                 var conversationId = conversationResource.Id;
 
                 // Do something with conversationId if needed
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine(ex.Message);
-                _logger.LogError(ex.Message);
-                _logger.LogInformation(ex.Message);
+                _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
             }
         }
 
