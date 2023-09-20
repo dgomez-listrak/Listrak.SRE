@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using Microsoft.Bot.Schema.Teams;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
@@ -25,12 +26,14 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly IBotFrameworkHttpAdapter Adapter;
         private readonly IBot Bot;
         private readonly ITeamsStartNewThreadInTeam TeamsThing;
+        private readonly ILogger _logger;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing, ILogger logger)
         {
             Adapter = adapter;
             Bot = bot;
             TeamsThing = teamsThing;
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -51,6 +54,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
                 consumer.Subscribe("opsgeniewebhook");
                 Console.WriteLine("Listening...");
+                _logger.LogInformation("Listening...");
                 System.Diagnostics.Trace.WriteLine("Listening to Kafka");
                 try
                 {
@@ -59,15 +63,19 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         try
                         {
                             var cr = consumer.Consume();
+                            _logger.LogInformation($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
                             System.Diagnostics.Trace.WriteLine($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
+                            _logger.LogInformation("Sending to teams...");
                             System.Diagnostics.Trace.WriteLine("Sending to teams...");
                             TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2", cr.Message.Value);
                             System.Diagnostics.Trace.WriteLine("Sent to teams");
+                            _logger.LogInformation("Sent to teams...");
 
                         }
                         catch (ConsumeException e)
                         {
                             Console.WriteLine($"Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
+                            _logger.LogError($"Error consuming from topic '{e.ConsumerRecord.Topic}': {e.Error.Reason}");
                         }
                     }
                 }
@@ -75,6 +83,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                 {
                     Console.WriteLine($"Error occured: {e.Error.Reason}");
                     System.Diagnostics.Trace.WriteLine($"Error occured: {e.Error.Reason}");
+                    _logger.LogError($"Error occured: {e.Error.Reason}");
                     consumer.Close();
                 }
                 return Task.CompletedTask;
@@ -92,20 +101,23 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly string _appId;
         private readonly string _appPassword;
         private readonly string _tenantId;
+        private readonly ILogger _logger;
         public IBotFrameworkHttpAdapter Adapter { get; }
 
         private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
 
-        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter)
+        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter, ILogger logger)
         {
             Adapter = adapter;
             _appId = configuration["MicrosoftAppId"];
             _appPassword = configuration["MicrosoftAppPassword"];
             _tenantId = configuration["MicrosoftAppTenantId"];
+            _logger = logger;
         }
 
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
+            _logger.LogInformation("Sending message to teams...");
             CancellationToken cancellationToken = CancellationToken.None;
             System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
             try
@@ -131,9 +143,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
                 conversationParameters.Activity.Text = message;
 
-                var conversationResource = await connectorClient.Conversations
-                    .CreateConversationAsync(conversationParameters);
-
+                var conversationResource = await connectorClient.Conversations.CreateConversationAsync(conversationParameters);
+                _logger.LogInformation("Message sent...hopefully");
                 var conversationId = conversationResource.Id;
 
                 // Do something with conversationId if needed
@@ -141,6 +152,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.WriteLine(ex.Message);
+                _logger.LogError(ex.Message);
+                _logger.LogInformation(ex.Message);
             }
         }
 

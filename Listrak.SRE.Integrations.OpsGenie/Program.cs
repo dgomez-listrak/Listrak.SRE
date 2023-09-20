@@ -24,6 +24,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
                     {
                         logging.AddDebug();
                         logging.AddConsole();
+                        logging.AddAzureWebAppDiagnostics();
                     });
                     webBuilder.UseStartup<Startup>();
                 }).ConfigureServices((context, collection) =>

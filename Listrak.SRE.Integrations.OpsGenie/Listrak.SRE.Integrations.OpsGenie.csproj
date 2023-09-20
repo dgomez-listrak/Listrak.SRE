@@ -17,6 +17,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.7" />
     <PackageReference Include="Microsoft.Bot.Builder.Dialogs" Version="4.20.1" />
     <PackageReference Include="Microsoft.Bot.Builder.Integration.AspNet.Core" Version="4.20.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="7.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     <PackageReference Include="Polly" Version="7.2.4" />
   </ItemGroup>
   <ItemGroup>

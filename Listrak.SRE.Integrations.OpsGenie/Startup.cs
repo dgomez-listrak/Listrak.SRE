@@ -8,6 +8,7 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.BotBuilderSamples.Bots;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Listrak.SRE.Integrations.OpsGenie
 {
@@ -20,7 +21,12 @@ namespace Listrak.SRE.Integrations.OpsGenie
             {
                 options.SerializerSettings.MaxDepth = HttpHelper.BotMessageSerializerSettings.MaxDepth;
             });
-
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddConsole();
+                loggingBuilder.AddDebug();
+                loggingBuilder.AddAzureWebAppDiagnostics();
+            });
             // Create the Bot Framework Authentication to be used with the Bot Adapter.
             services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();
 
