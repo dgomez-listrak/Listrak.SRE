@@ -26,7 +26,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
                 loggingBuilder.AddConsole();
                 loggingBuilder.AddDebug();
                 loggingBuilder.AddAzureWebAppDiagnostics();
-            });
+            }).BuildServiceProvider();
             // Create the Bot Framework Authentication to be used with the Bot Adapter.
             services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();
 
@@ -38,6 +38,9 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IWebHookProducer, WebhookProducer>();
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
             services.AddSingleton<ITeamsStartNewThreadInTeam, TeamsStartNewThreadInTeam>();
+            services.AddSingleton<ILoggerFactory, LoggerFactory>();
+            services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+            
             //services.AddTransient<IBot, TeamsConversationBot>();
         }
 

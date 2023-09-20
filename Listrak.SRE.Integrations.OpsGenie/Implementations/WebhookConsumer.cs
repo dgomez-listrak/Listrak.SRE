@@ -26,9 +26,9 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly IBotFrameworkHttpAdapter Adapter;
         private readonly IBot Bot;
         private readonly ITeamsStartNewThreadInTeam TeamsThing;
-        private readonly ILogger _logger;
+        private readonly ILogger<WebhookConsumer> _logger;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing, ILogger logger)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing, ILogger<WebhookConsumer> logger)
         {
             Adapter = adapter;
             Bot = bot;
@@ -101,12 +101,12 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly string _appId;
         private readonly string _appPassword;
         private readonly string _tenantId;
-        private readonly ILogger _logger;
+        private readonly ILogger<TeamsStartNewThreadInTeam> _logger;
         public IBotFrameworkHttpAdapter Adapter { get; }
 
         private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
 
-        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter, ILogger logger)
+        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter, ILogger<TeamsStartNewThreadInTeam> logger)
         {
             Adapter = adapter;
             _appId = configuration["MicrosoftAppId"];
