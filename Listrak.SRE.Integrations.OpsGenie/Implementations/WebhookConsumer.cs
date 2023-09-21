@@ -172,10 +172,10 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                     ChannelId = channelId,
                     Conversation = new ConversationAccount(id: channelId)
                 };
-                activity.Attachments = new List<Attachment>
-                {
-                    CreateAdaptiveCardAttachment(_card)
-                };
+                //activity.Attachments = new List<Attachment>
+                //{
+                //    CreateAdaptiveCardAttachment(_card)
+                //};
 
 
                 await connectorClient.Conversations.SendToConversationAsync(activity);
