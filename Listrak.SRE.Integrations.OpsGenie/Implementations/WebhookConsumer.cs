@@ -157,6 +157,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
         public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
+            _logger.LogInformation("[TeamsStartNewThreadInTeam]  SendMessageAsync to Teams Begin");
             System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
             try
             {
@@ -178,10 +179,11 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
 
                 await connectorClient.Conversations.SendToConversationAsync(activity);
+                _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine(ex.Message);
+                _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
             }
 
         }
