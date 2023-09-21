@@ -115,7 +115,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             _logger = logger;
         }
 
-        public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
+        /*public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
         {
             CancellationToken cancellationToken = CancellationToken.None;
             _logger.LogInformation("[TeamsStartNewThreadInTeam]  SendMessageAsync to Teams Begin");
@@ -152,7 +152,40 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             {
                 _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
             }
+        }*/
+
+
+        public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
+        {
+            System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
+            try
+            {
+                var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
+                var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
+
+                var activity = new Activity
+                {
+                    Type = ActivityTypes.Message,
+                    Text = message,
+                    ServiceUrl = serviceUrl,
+                    ChannelId = channelId,
+                    Conversation = new ConversationAccount(id: channelId)
+                };
+                activity.Attachments = new List<Attachment>
+                {
+                    CreateAdaptiveCardAttachment(_card)
+                };
+
+
+                await connectorClient.Conversations.SendToConversationAsync(activity);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(ex.Message);
+            }
+
         }
+
 
 
         private Attachment CreateAdaptiveCardAttachment(string filePath)
