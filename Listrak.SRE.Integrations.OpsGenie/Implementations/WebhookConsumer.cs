@@ -177,8 +177,16 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                 //    CreateAdaptiveCardAttachment(_card)
                 //};
 
+                /*
+                 *  var cardAttachment = CreateAdaptiveCardAttachment(_cards[r.Next(_cards.Length)]);
 
-                await connectorClient.Conversations.SendToConversationAsync(activity);
+                    //turnContext.Activity.Attachments = new List<Attachment>() { cardAttachment };
+                    await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
+                 */
+                
+                
+                //await connectorClient.Conversations.SendToConversationAsync(activity);
+                await connectorClient.Conversations.SendToConversationAsync((Activity)MessageFactory.Attachment(CreateAdaptiveCardAttachment(_card)));
                 _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
             }
             catch (Exception ex)
