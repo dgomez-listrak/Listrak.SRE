@@ -1,6 +1,5 @@
 ﻿using Confluent.Kafka;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
@@ -10,14 +9,9 @@ using Microsoft.AspNetCore.JsonPatch.Internal;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder;
 using Microsoft.BotBuilderSamples.Bots;
-using Microsoft.Bot.Connector.Authentication;
-using Microsoft.Bot.Connector;
-using Microsoft.Bot.Schema;
-using Microsoft.Extensions.Configuration;
-using System.IO;
 using Microsoft.Bot.Schema.Teams;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
@@ -25,10 +19,10 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
     {
         private readonly IBotFrameworkHttpAdapter Adapter;
         private readonly IBot Bot;
-        private readonly ITeamsStartNewThreadInTeam TeamsThing;
+        private readonly ITeamsSendNotification TeamsThing;
         private readonly ILogger<WebhookConsumer> _logger;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsStartNewThreadInTeam teamsThing, ILogger<WebhookConsumer> logger)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsSendNotification teamsThing, ILogger<WebhookConsumer> logger)
         {
             Adapter = adapter;
             Bot = bot;
@@ -94,125 +88,5 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         {
             return Task.CompletedTask;
         }
-    }
-
-    public class TeamsStartNewThreadInTeam : ITeamsStartNewThreadInTeam
-    {
-        private readonly string _appId;
-        private readonly string _appPassword;
-        private readonly string _tenantId;
-        private readonly ILogger<TeamsStartNewThreadInTeam> _logger;
-        public IBotFrameworkHttpAdapter Adapter { get; }
-
-        private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
-
-        public TeamsStartNewThreadInTeam(IConfiguration configuration, IBotFrameworkHttpAdapter adapter, ILogger<TeamsStartNewThreadInTeam> logger)
-        {
-            Adapter = adapter;
-            _appId = configuration["MicrosoftAppId"];
-            _appPassword = configuration["MicrosoftAppPassword"];
-            _tenantId = configuration["MicrosoftAppTenantId"];
-            _logger = logger;
-        }
-
-        /*public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
-        {
-            CancellationToken cancellationToken = CancellationToken.None;
-            _logger.LogInformation("[TeamsStartNewThreadInTeam]  SendMessageAsync to Teams Begin");
-            try
-            {
-                var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
-                var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-
-                var conversationParameters = new ConversationParameters
-                {
-                    ChannelData = new TeamsChannelData
-                    {
-                        Channel = new ChannelInfo(channelId),
-                    },
-                    IsGroup = true,
-                    Activity = (Activity)Activity.CreateMessageActivity(),
-                    TenantId = _tenantId
-                };
-
-                conversationParameters.Activity.Attachments = new List<Attachment>
-                {
-                    CreateAdaptiveCardAttachment(_card)
-                };
-
-                conversationParameters.Activity.Text = message;
-
-                var conversationResource = await connectorClient.Conversations.CreateConversationAsync(conversationParameters);
-                _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
-                var conversationId = conversationResource.Id;
-
-                // Do something with conversationId if needed
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
-            }
-        }*/
-
-
-        public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
-        {
-            _logger.LogInformation("[TeamsStartNewThreadInTeam]  SendMessageAsync to Teams Begin");
-            System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
-            try
-            {
-                var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
-                var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-
-                var activity = new Activity
-                {
-                    Type = ActivityTypes.Message,
-                    Text = message,
-                    ServiceUrl = serviceUrl,
-                    ChannelId = channelId,
-                    Conversation = new ConversationAccount(id: channelId)
-                };
-                //activity.Attachments = new List<Attachment>
-                //{
-                //    CreateAdaptiveCardAttachment(_card)
-                //};
-
-                /*
-                 *  var cardAttachment = CreateAdaptiveCardAttachment(_cards[r.Next(_cards.Length)]);
-
-                    //turnContext.Activity.Attachments = new List<Attachment>() { cardAttachment };
-                    await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
-                 */
-                
-                
-                //await connectorClient.Conversations.SendToConversationAsync(activity);
-                await connectorClient.Conversations.SendToConversationAsync((Activity)MessageFactory.Attachment(CreateAdaptiveCardAttachment(_card)));
-                _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
-            }
-
-        }
-
-
-
-        private Attachment CreateAdaptiveCardAttachment(string filePath)
-        {
-            var adaptiveCardJson = File.ReadAllText(filePath);
-            var adaptiveCardAttachment = new Attachment()
-            {
-                ContentType = "application/vnd.microsoft.card.adaptive",
-                Content = JsonConvert.DeserializeObject(adaptiveCardJson),
-            };
-            return adaptiveCardAttachment;
-        }
-
-    }
-
-    public interface ITeamsStartNewThreadInTeam
-    {
-        Task SendMessageAsync(string serviceUrl, string channelId, string message);
     }
 }
