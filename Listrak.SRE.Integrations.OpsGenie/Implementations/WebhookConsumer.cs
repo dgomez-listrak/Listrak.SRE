@@ -32,6 +32,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            return Task.CompletedTask;
             var config = new ConsumerConfig
             {
                 BootstrapServers = "srekafka.servicebus.windows.net:9093",
