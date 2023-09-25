@@ -5,12 +5,14 @@ using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
+using Listrak.SRE.Integrations.OpsGenie.Models;
 using Microsoft.AspNetCore.JsonPatch.Internal;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder;
 using Microsoft.BotBuilderSamples.Bots;
 using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
@@ -21,18 +23,20 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly IBot Bot;
         private readonly ITeamsSendNotification TeamsThing;
         private readonly ILogger<WebhookConsumer> _logger;
+        private readonly INotificationProcessor _notificationProcessor;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsSendNotification teamsThing, ILogger<WebhookConsumer> logger)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsSendNotification teamsThing, ILogger<WebhookConsumer> logger, INotificationProcessor notificationProcessor)
         {
             Adapter = adapter;
             Bot = bot;
             TeamsThing = teamsThing;
             _logger = logger;
+            _notificationProcessor = notificationProcessor;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+
             var config = new ConsumerConfig
             {
                 BootstrapServers = "srekafka.servicebus.windows.net:9093",
@@ -59,13 +63,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                         {
                             var cr = consumer.Consume();
                             _logger.LogInformation($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
-                            System.Diagnostics.Trace.WriteLine($"[WebhookConsumer] Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
-                            _logger.LogInformation("[WebhookConsumer] Sending to teams...");
-                            System.Diagnostics.Trace.WriteLine("[WebhookConsumer] Calling SendMessageAsync...");
-                            TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/", "19:24d638f4c79941298611e751c92277c4@thread.tacv2", cr.Message.Value);
-                            System.Diagnostics.Trace.WriteLine("Sent to teams");
-                            _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
-
+                            _logger.LogInformation("Sending to Notification Processor");
+                            _notificationProcessor.ProcessNotification(cr.Message.Value);
                         }
                         catch (ConsumeException e)
                         {
@@ -81,6 +80,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                     _logger.LogError($"[WebhookConsumer] Error occured: {e.Error.Reason}");
                     consumer.Close();
                 }
+
                 return Task.CompletedTask;
             }
         }

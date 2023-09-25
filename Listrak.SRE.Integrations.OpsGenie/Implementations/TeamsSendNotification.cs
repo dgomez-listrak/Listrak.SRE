@@ -33,15 +33,8 @@ public class TeamsSendNotification : ITeamsSendNotification
         _logger = logger;
     }
 
-    public async Task SendMessageAsync(string serviceUrl, string channelId, string message)
+    public async Task SendMessageAsync(string serviceUrl, string channelId, object message)
     {
-        var myData = new
-        {
-            Title = "OG Alert",
-            Description = "OG Template Render Test"
-        };
-
-
         _logger.LogInformation("[TeamsSendNotification]  SendMessageAsync to Teams Begin");
         System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
         try
@@ -49,7 +42,7 @@ public class TeamsSendNotification : ITeamsSendNotification
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-            var cardAttachment = CreateAdaptiveCardAttachment(_card, myData);
+            var cardAttachment = CreateAdaptiveCardAttachment(_card, message);
 
             var activity = new Activity
             {

@@ -26,19 +26,33 @@
 
             {
               "type": "TextBlock",
-              "text": "${title}",
+              "text": "[${title}](https://opsg.in/a/i/lstrk/${alertId})",
               "weight": "bolder",
-              "spacing": "none",
-              "url": "http://www.google.com"
-            },
-
-            {
-              "type": "TextBlock",
-              "text": "${description}",
-              "size": "small",
-              "wrap": true
-            }
+              "spacing": "none"
+            }           
           ]
+        }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "${description}",
+      "wrap": true
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        {
+          "title": "Priority: ",
+          "value": "${priority}"
+        },
+        {
+          "title": "Status: ",
+          "value": "${status}"
+        },
+        {
+          "title": "Source: ",
+          "value": "${source}"
         }
       ]
     }
