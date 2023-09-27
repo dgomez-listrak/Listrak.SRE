@@ -1,4 +1,5 @@
-﻿using Listrak.SRE.Integrations.OpsGenie.Implementations;
+﻿using Listrak.SRE.Integrations.OpsGenie.Bots;
+using Listrak.SRE.Integrations.OpsGenie.Implementations;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,15 +35,15 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
-            services.AddTransient<IBot, AdaptiveCardsBot>();
+            
             services.AddSingleton<IWebHookProducer, WebhookProducer>();
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
             services.AddSingleton<ITeamsSendNotification, TeamsSendNotification>();
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
             services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
             services.AddSingleton<INotificationProcessor, NotificationProcessor>();
-
-            //services.AddTransient<IBot, TeamsConversationBot>();
+            //services.AddTransient<IBot, AdaptiveCardsBot>();
+            services.AddTransient<IBot, NotificationCardHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

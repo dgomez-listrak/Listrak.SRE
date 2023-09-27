@@ -29,7 +29,7 @@
               "text": "[${title}](https://opsg.in/a/i/lstrk/${alertId})",
               "weight": "bolder",
               "spacing": "none"
-            }           
+            }
           ]
         }
       ]
@@ -59,9 +59,20 @@
   ],
   "actions": [
     {
-      "type": "Action.OpenUrl",
+      "type": "Action.Submit",
       "title": "Acknowledge",
-      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      "data": {
+        "type": "Ack",
+        "alertId": "${alertId}"
+      }
+    },
+    {
+      "type": "Action.Submit",
+      "title": "Close",
+      "data": {
+        "type": "Close",
+        "alertId": "${alertId}"
+      },
     },
     {
       "type": "Action.OpenUrl",
