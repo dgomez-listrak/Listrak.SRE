@@ -59,7 +59,8 @@ public class NotificationProcessor : INotificationProcessor
                     };
 
                     _logger.LogInformation("[WebhookConsumer] Sending to teams...");
-                    TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/","19:24d638f4c79941298611e751c92277c4@thread.tacv2", message);
+                    var result = TeamsThing.SendMessageAsync("https://smba.trafficmanager.net/amer/","19:24d638f4c79941298611e751c92277c4@thread.tacv2", message);
+                    Console.WriteLine(result);
                     _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
                     // Handle AnotherAction
                     break;

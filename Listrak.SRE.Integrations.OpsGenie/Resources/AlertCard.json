@@ -63,7 +63,9 @@
       "title": "Acknowledge",
       "data": {
         "type": "Ack",
-        "alertId": "${alertId}"
+        "alertId": "${alertId}",
+        "replyToId": "${alertId}"
+
       }
     },
     {
@@ -71,7 +73,8 @@
       "title": "Close",
       "data": {
         "type": "Close",
-        "alertId": "${alertId}"
+        "alertId": "${alertId}",
+        "replyToId": "${alertId}"
       },
     },
     {

@@ -18,18 +18,14 @@ public class TeamsSendNotification : ITeamsSendNotification
 {
     private readonly string _appId;
     private readonly string _appPassword;
-    private readonly string _tenantId;
     private readonly ILogger<TeamsSendNotification> _logger;
-    public IBotFrameworkHttpAdapter Adapter { get; }
 
     private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
 
-    public TeamsSendNotification(IConfiguration configuration, IBotFrameworkHttpAdapter adapter, ILogger<TeamsSendNotification> logger)
+    public TeamsSendNotification(IConfiguration configuration, ILogger<TeamsSendNotification> logger)
     {
-        Adapter = adapter;
         _appId = configuration["MicrosoftAppId"];
         _appPassword = configuration["MicrosoftAppPassword"];
-        _tenantId = configuration["MicrosoftAppTenantId"];
         _logger = logger;
     }
 
@@ -49,13 +45,13 @@ public class TeamsSendNotification : ITeamsSendNotification
                 Type = ActivityTypes.Message,
                 ServiceUrl = serviceUrl,
                 ChannelId = channelId,
-                Conversation = new ConversationAccount(id: channelId)
+                Conversation = new ConversationAccount(id: channelId),
+                ReplyToId = "thisIsAReplyToId"
             };
             activity.Attachments = new List<Attachment>() { cardAttachment };
 
-
-            await connectorClient.Conversations.SendToConversationAsync(activity);
-
+            var result = await connectorClient.Conversations.SendToConversationAsync(activity);
+            Console.WriteLine(result);
             _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
         }
         catch (Exception ex)

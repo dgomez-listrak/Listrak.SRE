@@ -1,19 +1,32 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using AdaptiveCards.Templating;
+using Confluent.Kafka;
+using Listrak.SRE.Integrations.OpsGenie.Implementations;
 using Listrak.SRE.Integrations.OpsGenie.Models;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Teams;
+using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Bots
 {
-    public class NotificationCardHandler : ActivityHandler
+
+    public class NotificationCardHandler : TeamsActivityHandler
     {
+        private readonly ILogger<WebhookConsumer> _logger;
+        public NotificationCardHandler(ILogger<WebhookConsumer> logger)
+        {
+            _logger = logger;
+        }
         private readonly string[] _cards =
         {
             Path.Combine(".", "Resources", "AlertCard.json")
@@ -23,42 +36,104 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext,
             CancellationToken cancellationToken)
         {
-            if (turnContext.Activity.Value != null)
+            try
             {
-                /// if value json has type of Acknowledge, thne do this
-                ///    https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?_=1695825793886
-                /// ?isBulk=false&alertId=aadacde3-2076-453d-9682-22e0f8317f18-1695825328305
-
-                var value = JsonConvert.DeserializeObject<NotificationActionModel>(turnContext.Activity.Value.ToString());
-                switch (value.type.ToLower())
+                if (turnContext.Activity.Value != null)
                 {
-                    case "ack":
-                        /// do http post to  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge
-                        //HttpWebRequest request = new HttpWebRequest($"https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?isBulk=false&alertId={value.alertId}");
-                        AcknowledgeAlert(value.alertId);
-                        break;
-                    case "close":
-                        CloseAlert(value.alertId);
-                        break;
+                    // if value json has type of Acknowledge, thne do this
+                    //  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?_=1695825793886
+                    // ?isBulk=false&alertId=aadacde3-2076-453d-9682-22e0f8317f18-1695825328305
+
+                    var value = JsonConvert.DeserializeObject<NotificationActionModel>(turnContext.Activity.Value.ToString());
+                    switch (value.type.ToLower())
+                    {
+                        case "ack":
+                            // do http post to  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge
+                            //HttpWebRequest request = new HttpWebRequest($"https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?isBulk=false&alertId={value.alertId}");
+                            AcknowledgeAlert(value.alertId);
+                            // Do some card update
+                            
+                            var message = new
+                            {
+                                Title = $"Title Variable UPDATED",
+                                Description = $"Description Variable",
+                                AlertId = $"AlertID Variable",
+                                Priority = $"Priority Variable",
+                                Status = $"{string.Empty}",
+                                Source = $"Source Varialbe",
+                            };
+                            var cardAttachment = CreateAdaptiveCardAttachment(_cards[0], message);
+                            
+                            /*var activity = new Activity
+                            {
+                                Type = ActivityTypes.Message,
+                                ServiceUrl = string.Empty,
+                                ChannelId = string.Empty
+                                
+                            };
+                            */
+                            var activity = turnContext.Activity;
+
+                            //var activity = MessageFactory.Attachment(cardAttachment);
+                            activity.Attachments = new List<Attachment>() { cardAttachment };
+
+
+
+
+                           // HeroCard card = new AdaptiveCards();
+                          //  card.Title = "I've been updated";
+
+                            var data = turnContext.Activity.Value as JObject;
+                            data = JObject.FromObject(data);
+                           // data["count"] = data["count"].Value<int>() + 1;
+                           // card.Text = $"Update count - {data["count"].Value<int>()}";
+                            /*card.Buttons = new List<CardAction>();
+                            card.Buttons.Add(new CardAction
+                            {
+                                Type = ActionTypes.MessageBack,
+                                Title = "Update Card",
+                                Text = "UpdateCardAction",
+                                Value = data
+                            });
+                            */
+
+                            //var activity = MessageFactory.Attachment(card.ToAttachment());
+                            activity.Id = turnContext.Activity.Conversation.Id;
+
+                            await turnContext.UpdateActivityAsync(activity, cancellationToken);
+
+
+                            break;
+
+                        case "close":
+                            CloseAlert(value.alertId);
+                            break;
+                    }
+                }
+                else
+                {
+                    //return;
+                    string message = turnContext.Activity.Text;
+                    var cardAttachment = CreateAdaptiveCardAttachment(_cards[0],string.Empty);
+                    var serviceUrl = turnContext.Activity.ServiceUrl;
+
+                    await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
+                    await turnContext.SendActivityAsync(
+                        MessageFactory.Text("Please enter any text to see another card."),
+                        cancellationToken);
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        await turnContext.SendActivityAsync(
+                            MessageFactory.Text($"Dynamic response: {message} - URL: {serviceUrl}"), cancellationToken);
+                    }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                return;
-                string message = turnContext.Activity.Text;
-                var cardAttachment = CreateAdaptiveCardAttachment(_cards[0]);
-                var serviceUrl = turnContext.Activity.ServiceUrl;
-
-                await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
-                await turnContext.SendActivityAsync(MessageFactory.Text("Please enter any text to see another card."),
-                    cancellationToken);
-                if (!string.IsNullOrEmpty(message))
-                {
-                    await turnContext.SendActivityAsync(
-                        MessageFactory.Text($"Dynamic response: {message} - URL: {serviceUrl}"), cancellationToken);
-                }
+                _logger.LogError(ex.Message, ex.StackTrace);
             }
         }
+        
 
         public static void AcknowledgeAlert(string alertId)
         {
@@ -152,16 +227,18 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
             }
         }
 
-        private static Attachment CreateAdaptiveCardAttachment(string filePath)
+        private Attachment CreateAdaptiveCardAttachment(string filePath, object myData)
         {
             var adaptiveCardJson = File.ReadAllText(filePath);
+            var template = new AdaptiveCardTemplate(adaptiveCardJson);
+            string cardJson = template.Expand(myData);
+
             var adaptiveCardAttachment = new Attachment()
             {
                 ContentType = "application/vnd.microsoft.card.adaptive",
-                Content = JsonConvert.DeserializeObject(adaptiveCardJson),
+                Content = JsonConvert.DeserializeObject(cardJson)
             };
             return adaptiveCardAttachment;
         }
-
     }
 }
