@@ -102,6 +102,9 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             activity.Id = turnContext.Activity.Id;
                             activity.Conversation.Id = turnContext.Activity.Conversation.Id;
 
+                            activity = turnContext.Activity;
+                            
+
 
                             var x = await turnContext.UpdateActivityAsync(activity, cancellationToken);
                             Console.WriteLine(x.ToString());
