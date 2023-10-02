@@ -100,7 +100,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             //var activity = MessageFactory.Attachment(card.ToAttachment());
 
                             activity.Id = turnContext.Activity.Id;
-
+                            activity.Id = turnContext.Activity.Conversation.Id;
                             activity.Conversation.Id = turnContext.Activity.Conversation.Id;
 
 
