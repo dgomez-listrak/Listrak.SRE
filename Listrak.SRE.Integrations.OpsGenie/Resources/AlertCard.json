@@ -23,7 +23,6 @@
           "type": "Column",
           "width": 2,
           "items": [
-
             {
               "type": "TextBlock",
               "text": "[${title}](https://opsg.in/a/i/lstrk/${alertId})",
@@ -65,7 +64,6 @@
         "type": "Ack",
         "alertId": "${alertId}",
         "replyToId": "${alertId}"
-
       }
     },
     {
@@ -75,7 +73,7 @@
         "type": "Close",
         "alertId": "${alertId}",
         "replyToId": "${alertId}"
-      },
+      }
     },
     {
       "type": "Action.OpenUrl",

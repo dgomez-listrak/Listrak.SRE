@@ -52,7 +52,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             //HttpWebRequest request = new HttpWebRequest($"https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?isBulk=false&alertId={value.alertId}");
                             AcknowledgeAlert(value.alertId);
                             // Do some card update
-                            
+
                             var message = new
                             {
                                 Title = $"Title Variable UPDATED",
@@ -63,7 +63,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                                 Source = $"Source Varialbe",
                             };
                             var cardAttachment = CreateAdaptiveCardAttachment(_cards[0], message);
-                            
+
                             /*var activity = new Activity
                             {
                                 Type = ActivityTypes.Message,
@@ -80,13 +80,13 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
 
 
 
-                           // HeroCard card = new AdaptiveCards();
-                          //  card.Title = "I've been updated";
+                            // HeroCard card = new AdaptiveCards();
+                            //  card.Title = "I've been updated";
 
                             var data = turnContext.Activity.Value as JObject;
                             data = JObject.FromObject(data);
-                           // data["count"] = data["count"].Value<int>() + 1;
-                           // card.Text = $"Update count - {data["count"].Value<int>()}";
+                            // data["count"] = data["count"].Value<int>() + 1;
+                            // card.Text = $"Update count - {data["count"].Value<int>()}";
                             /*card.Buttons = new List<CardAction>();
                             card.Buttons.Add(new CardAction
                             {
@@ -98,12 +98,14 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             */
 
                             //var activity = MessageFactory.Attachment(card.ToAttachment());
-                            
+
                             activity.Id = turnContext.Activity.Id;
 
+                            activity.Conversation.Id = turnContext.Activity.Conversation.Id;
 
-                            await turnContext.UpdateActivityAsync(activity, cancellationToken);
 
+                            var x = await turnContext.UpdateActivityAsync(activity, cancellationToken);
+                            Console.WriteLine(x.ToString());
 
                             break;
 
@@ -116,7 +118,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                 {
                     //return;
                     string message = turnContext.Activity.Text;
-                    var cardAttachment = CreateAdaptiveCardAttachment(_cards[0],string.Empty);
+                    var cardAttachment = CreateAdaptiveCardAttachment(_cards[0], string.Empty);
                     var serviceUrl = turnContext.Activity.ServiceUrl;
 
                     await turnContext.SendActivityAsync(MessageFactory.Attachment(cardAttachment), cancellationToken);
@@ -135,7 +137,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                 _logger.LogError(ex.Message, ex.StackTrace);
             }
         }
-        
+
 
         public static void AcknowledgeAlert(string alertId)
         {
