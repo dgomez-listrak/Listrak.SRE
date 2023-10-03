@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using AdaptiveCards.Templating;
 using Confluent.Kafka;
 using Listrak.SRE.Integrations.OpsGenie.Implementations;
+using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Listrak.SRE.Integrations.OpsGenie.Models;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Teams;
@@ -23,9 +24,12 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
     public class NotificationCardHandler : TeamsActivityHandler
     {
         private readonly ILogger<WebhookConsumer> _logger;
-        public NotificationCardHandler(ILogger<WebhookConsumer> logger)
+        private readonly IOpsGenieAPI _api;
+
+        public NotificationCardHandler(ILogger<WebhookConsumer> logger, IOpsGenieAPI api)
         {
             _logger = logger;
+            _api = api;
         }
         private readonly string[] _cards =
         {
@@ -50,7 +54,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                         case "ack":
                             // do http post to  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge
                             //HttpWebRequest request = new HttpWebRequest($"https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?isBulk=false&alertId={value.alertId}");
-                            AcknowledgeAlert(value.alertId);
+                            _api.AcknowledgeAlert(value.alertId);
                             // Do some card update
 
                             var message = new
