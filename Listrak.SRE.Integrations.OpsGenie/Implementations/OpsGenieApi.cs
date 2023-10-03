@@ -10,15 +10,10 @@ using System.Net.Http;
 using System.Text;
 using System.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Recognizers.Definitions;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
-
-    /*{
-        private readonly string _apiKey = "348d8279-6ef8-4883-b0b5-a0853db14458";
-        private readonly string _baseUrl = "https://api.opsgenie.com/v2/alerts";
-        */
-
     public class OpsGenieApi : IOpsGenieAPI
     {
         private readonly HttpClient _httpClient;
@@ -40,13 +35,17 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
         public async Task UnacknowledgeAlert(string alertId)
         {
-            // Similar payload and endpoint structure can go here.
+            var payload = new { isBulk = "false", alertId = alertId };
+            await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
+                payload);
         }
 
         public async Task CloseAlert(string alertId)
         {
-            // Similar payload and endpoint structure can go here.
+            var payload = new { isBulk = "false", alertId = alertId };
+            await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
         }
+
 
         public async Task CommentOnAlert(string alertId, string comment)
         {

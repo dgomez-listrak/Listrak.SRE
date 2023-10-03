@@ -7,12 +7,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
-using Microsoft.BotBuilderSamples.Bots;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Configuration;
-using Microsoft.Extensions.Configuration;
 
 namespace Listrak.SRE.Integrations.OpsGenie
 {
@@ -46,8 +44,8 @@ namespace Listrak.SRE.Integrations.OpsGenie
 
             // Create the Bot Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
-            
-            
+
+
 
             // Register the HttpClient and OpsGenieApi
             services.AddHttpClient<IOpsGenieAPI, OpsGenieApi>();
@@ -60,7 +58,6 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
             services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
             services.AddSingleton<INotificationProcessor, NotificationProcessor>();
-            //services.AddTransient<IBot, AdaptiveCardsBot>();
             services.AddTransient<IBot, NotificationCardHandler>();
         }
 

@@ -1,19 +1,11 @@
 ﻿using Confluent.Kafka;
-using System;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
-using Microsoft.Extensions.Hosting;
-using System.Threading;
-using Listrak.SRE.Integrations.OpsGenie.Models;
-using Microsoft.AspNetCore.JsonPatch.Internal;
-using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder;
-using Microsoft.BotBuilderSamples.Bots;
-using Microsoft.Bot.Schema.Teams;
+using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
