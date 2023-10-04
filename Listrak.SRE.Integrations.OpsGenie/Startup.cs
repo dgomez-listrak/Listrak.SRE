@@ -54,7 +54,6 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IOpsGenieAPI, OpsGenieApi>();
             services.AddSingleton<IWebHookProducer, WebhookProducer>();
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
-            services.AddSingleton<ITeamsSendNotification, TeamsSendNotification>();
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
             services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
             services.AddSingleton<INotificationProcessor, NotificationProcessor>();

@@ -13,15 +13,14 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
     {
         private readonly IBotFrameworkHttpAdapter Adapter;
         private readonly IBot Bot;
-        private readonly ITeamsSendNotification TeamsThing;
+        
         private readonly ILogger<WebhookConsumer> _logger;
         private readonly INotificationProcessor _notificationProcessor;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ITeamsSendNotification teamsThing, ILogger<WebhookConsumer> logger, INotificationProcessor notificationProcessor)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ILogger<WebhookConsumer> logger, INotificationProcessor notificationProcessor)
         {
             Adapter = adapter;
             Bot = bot;
-            TeamsThing = teamsThing;
             _logger = logger;
             _notificationProcessor = notificationProcessor;
         }
