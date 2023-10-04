@@ -92,39 +92,37 @@ public class NotificationProcessor : INotificationProcessor
             JObject jsonObject = JObject.Parse(jsonPayload);
             string actionValue = jsonObject["action"]?.ToString();
 
-            switch (actionValue)
+            var message = new
             {
-                case "Create":
-                    Console.WriteLine("Handling Create.");
+                Title = $"{jsonObject["alert"]?["message"] ?? jsonObject["data"]?["message"]}",
+                Description = $"{jsonObject["alert"]?["description"] ?? jsonObject["data"]?["description"]}",
+                AlertId = actionValue == "Create" ? $"{jsonObject["alert"]["alertId"]}" : $"{jsonObject["data"]["id"]}",
+                Priority = $"{jsonObject["alert"]?["priority"] ?? jsonObject["data"]?["priority"]}",
+                Status = $"{jsonObject["data"]?["status"] ?? string.Empty}", // Fetching the status value conditionally
+                Source = $"{jsonObject["alert"]?["source"] ?? jsonObject["data"]?["source"]}",
+            };
 
-                    WebhookPayload newAlert = JsonConvert.DeserializeObject<WebhookPayload>(jsonPayload);
-
-                    var message = new
-                    {
-                        Title = $"{newAlert.Alert.Message}",
-                        Description = $"{newAlert.Alert.Description}",
-                        AlertId = $"{newAlert.Alert.AlertId}",
-                        Priority = $"{newAlert.Alert.Priority}",
-                        Status = $"{string.Empty}",
-                        Source = $"{newAlert.Alert.Source}",
-                    };
-
-                    _logger.LogInformation("[WebhookConsumer] Sending to teams...");
-                    var result = SendMessageAsync(_serviceUrl,_channelId, message);
-                    Console.WriteLine(result);
-                    _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
-                    break;
-
-                default:
-                    break;
+            if (actionValue == "Create")
+            {
+                Console.WriteLine("Handling Create.");
             }
+            else if (jsonObject["data"] != null)
+            {
+                // Handle the API response specifics here if any
+            }
+
+            _logger.LogInformation("[WebhookConsumer] Sending to teams...");
+            var result = SendMessageAsync(_serviceUrl, _channelId, message);
+            Console.WriteLine(result);
+            _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
         }
         catch (Exception e)
         {
-            Console.WriteLine($"[WebhookConsumer] Error occured: {e.Message}");
-            _logger.LogError($"[WebhookConsumer] Error occured: {e.Message}");
+            Console.WriteLine($"[WebhookConsumer] Error occurred: {e.Message}");
+            _logger.LogError($"[WebhookConsumer] Error occurred: {e.Message}");
             return Task.FromException(e);
         }
         return Task.CompletedTask;
     }
+
 }

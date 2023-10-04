@@ -14,7 +14,7 @@
             {
               "type": "Image",
               "style": "Person",
-              "url": "https://ogti-app.azurewebsites.net/og-icon.png",
+              "url": "https://ogti-app.scm.azurewebsites.net/api/vfs/site/wwwroot/Resources/og_icon.png",
               "size": "small"
             }
           ]
