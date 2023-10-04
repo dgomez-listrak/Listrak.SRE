@@ -1,35 +1,33 @@
-﻿using Listrak.SRE.Integrations.OpsGenie.Interfaces;
+﻿using AdaptiveCards.Templating;
+using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Listrak.SRE.Integrations.OpsGenie.Models;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
+using Microsoft.Bot.Connector;
+using Microsoft.Bot.Connector.Authentication;
+using Microsoft.Bot.Schema;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Bot.Connector.Authentication;
-using Microsoft.Bot.Connector;
-using Microsoft.Bot.Schema;
-using System.Collections.Generic;
-using AdaptiveCards.Templating;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
 public class NotificationProcessor : INotificationProcessor
 {
+    private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
+    private readonly ILogger<NotificationProcessor> _logger;
     private readonly IBotFrameworkHttpAdapter Adapter;
+    private readonly string _appPassword;
+    private readonly string _appId;
+    private readonly string _serviceUrl;
+    private readonly string _channelId;
     private readonly IBot Bot;
     
-    private readonly ILogger<NotificationProcessor> _logger;
-
-
-    private readonly string _appId;
-    private readonly string _appPassword;
-    
-
-    private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
 
     public NotificationProcessor(IBotFrameworkHttpAdapter adapter, IBot bot, ILogger<NotificationProcessor> logger, IConfiguration configuration)
     {
@@ -38,6 +36,8 @@ public class NotificationProcessor : INotificationProcessor
         _logger = logger;
         _appId = configuration["MicrosoftAppId"];
         _appPassword = configuration["MicrosoftAppPassword"];
+        _serviceUrl = configuration["ServiceUrl"];
+        _channelId = configuration["ChannelId"];
     }
 
     public async Task SendMessageAsync(string serviceUrl, string channelId, object message)
@@ -49,15 +49,14 @@ public class NotificationProcessor : INotificationProcessor
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-            var cardAttachment = CreateAdaptiveCardAttachment(_card, message);
+            var cardAttachment = BuildNotificationCard(_card, message);
 
             var activity = new Activity
             {
                 Type = ActivityTypes.Message,
                 ServiceUrl = serviceUrl,
                 ChannelId = channelId,
-                Conversation = new ConversationAccount(id: channelId),
-                ReplyToId = "thisIsAReplyToId"
+                Conversation = new ConversationAccount(id: channelId)
             };
             activity.Attachments = new List<Attachment>() { cardAttachment };
 
@@ -71,7 +70,7 @@ public class NotificationProcessor : INotificationProcessor
         }
     }
 
-    private Attachment CreateAdaptiveCardAttachment(string filePath, object myData)
+    private Attachment BuildNotificationCard(string filePath, object myData)
     {
         var adaptiveCardJson = File.ReadAllText(filePath);
         var template = new AdaptiveCardTemplate(adaptiveCardJson);
@@ -90,20 +89,11 @@ public class NotificationProcessor : INotificationProcessor
     {
         try
         {
-            // Parse JSON into a JObject
             JObject jsonObject = JObject.Parse(jsonPayload);
-
-            // Check the "action" value
             string actionValue = jsonObject["action"]?.ToString();
 
-            // Filter based on the "action" value
             switch (actionValue)
             {
-                case "Acknowledge":
-                    Console.WriteLine("Handling Acknowledge action.");
-                    // Handle Acknowledge action
-                    break;
-
                 case "Create":
                     Console.WriteLine("Handling Create.");
 
@@ -120,15 +110,12 @@ public class NotificationProcessor : INotificationProcessor
                     };
 
                     _logger.LogInformation("[WebhookConsumer] Sending to teams...");
-                    var result = SendMessageAsync("https://smba.trafficmanager.net/amer/","19:24d638f4c79941298611e751c92277c4@thread.tacv2", message);
+                    var result = SendMessageAsync(_serviceUrl,_channelId, message);
                     Console.WriteLine(result);
                     _logger.LogInformation("[WebhookConsumer] SendMessageAsync Called");
-                    // Handle AnotherAction
                     break;
 
                 default:
-                    Console.WriteLine("Action not recognized.");
-                    // Handle unrecognized actions
                     break;
             }
         }
@@ -138,7 +125,6 @@ public class NotificationProcessor : INotificationProcessor
             _logger.LogError($"[WebhookConsumer] Error occured: {e.Message}");
             return Task.FromException(e);
         }
-
         return Task.CompletedTask;
     }
 }

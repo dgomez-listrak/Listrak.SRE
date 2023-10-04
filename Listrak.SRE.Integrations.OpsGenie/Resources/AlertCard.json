@@ -14,7 +14,7 @@
             {
               "type": "Image",
               "style": "Person",
-              "url": "https://picsum.photos/300?image=882",
+              "url": "https://ogti-app.azurewebsites.net/og-icon.png",
               "size": "small"
             }
           ]
