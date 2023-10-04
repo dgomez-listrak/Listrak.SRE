@@ -83,8 +83,6 @@ public class NotificationProcessor : INotificationProcessor
         };
         return adaptiveCardAttachment;
     }
-
-
     public Task ProcessNotification(string jsonPayload)
     {
         try
@@ -92,33 +90,29 @@ public class NotificationProcessor : INotificationProcessor
             JObject jsonObject = JObject.Parse(jsonPayload);
             string actionValue = jsonObject["action"]?.ToString();
 
-            switch (actionValue.ToLower())
+            IMessagePayload messagePayload;
+            if (actionValue?.ToLower() == "create")
             {
-                case "create":
-
-                    {
-                        var message = new
-                        {
-                            Title = $"{jsonObject["alert"]?["message"] ?? jsonObject["data"]?["message"]}",
-                            Description =
-                                $"{jsonObject["alert"]?["description"] ?? jsonObject["data"]?["description"]}",
-                            AlertId = actionValue == "Create"
-                                ? $"{jsonObject["alert"]["alertId"]}"
-                                : $"{jsonObject["data"]["id"]}",
-                            Priority = $"{jsonObject["alert"]?["priority"] ?? jsonObject["data"]?["priority"]}",
-                            Status =
-                                $"{jsonObject["data"]?["status"] ?? string.Empty}", // Fetching the status value conditionally
-                            Source = $"{jsonObject["alert"]?["source"] ?? jsonObject["data"]?["source"]}",
-                        };
-                        var result = SendMessageAsync(_serviceUrl, _channelId, message);
-                        break;
-                    }
-
-                    break;
-                default:
-                    _logger.LogError($"[WebhookConsumer] ActionType was: {actionValue}");
-                    break;
+                messagePayload = new NewAlertMessagePayload();
             }
+            else
+            {
+                // Log the jsonPayload if the actionValue is not "create"
+                _logger.LogInformation($"[WebhookConsumer] Payload: {jsonPayload}");
+
+                if (jsonObject["data"] != null)
+                {
+                    messagePayload = new DataMessagePayload();
+                }
+                else
+                {
+                    _logger.LogError($"[WebhookConsumer] ActionType was: {actionValue}");
+                    return Task.CompletedTask;
+                }
+            }
+
+            var message = messagePayload.CreateMessagePayload(jsonObject);
+            var result = SendMessageAsync(_serviceUrl, _channelId, message);
         }
         catch (Exception e)
         {
@@ -128,5 +122,6 @@ public class NotificationProcessor : INotificationProcessor
         }
         return Task.CompletedTask;
     }
+
 
 }
