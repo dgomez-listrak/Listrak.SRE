@@ -98,15 +98,15 @@ public class NotificationProcessor : INotificationProcessor
             else
             {
                 // Log the jsonPayload if the actionValue is not "create"
-                _logger.LogInformation($"[WebhookConsumer] Payload: {jsonPayload}");
-
+                _logger.LogError($"[WebhookConsumer] Payload: {jsonPayload}");
+                _logger.LogError($"[WebhookConsumer] ActionType was: {actionValue}");
                 if (jsonObject["data"] != null)
                 {
                     messagePayload = new DataMessagePayload();
                 }
                 else
                 {
-                    _logger.LogError($"[WebhookConsumer] ActionType was: {actionValue}");
+                 
                     return Task.CompletedTask;
                 }
             }
