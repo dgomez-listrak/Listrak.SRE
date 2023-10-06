@@ -8,6 +8,7 @@ using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,22 +18,19 @@ using System.Threading.Tasks;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
-public class NotificationProcessor : INotificationProcessor
+public class OpsGenieHandler : IOpsGenieHandler
 {
     private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
-    private readonly ILogger<NotificationProcessor> _logger;
-    private readonly IBotFrameworkHttpAdapter Adapter;
+    private readonly ILogger<OpsGenieHandler> _logger;
+
     private readonly string _appPassword;
     private readonly string _appId;
     private readonly string _serviceUrl;
     private readonly string _channelId;
-    private readonly IBot Bot;
 
-
-    public NotificationProcessor(IBotFrameworkHttpAdapter adapter, IBot bot, ILogger<NotificationProcessor> logger, IConfiguration configuration)
+    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration)
     {
-        Adapter = adapter;
-        Bot = bot;
+
         _logger = logger;
         _appId = configuration["MicrosoftAppId"];
         _appPassword = configuration["MicrosoftAppPassword"];
@@ -58,11 +56,51 @@ public class NotificationProcessor : INotificationProcessor
                 ChannelId = channelId,
                 Conversation = new ConversationAccount(id: channelId)
             };
+
+
             activity.Attachments = new List<Attachment>() { cardAttachment };
 
             var result = await connectorClient.Conversations.SendToConversationAsync(activity);
+
+            activity.Id = result.Id;
+            ////activity.Attachments[0].Content = new JObject { ["text"] = "This is a test" };
+            ////await connectorClient.Conversations.UpdateActivityAsync(activity);
             Console.WriteLine(result);
             _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
+
+            string connectionString = "MYSQLCONNSTR_Listrk_SRE";
+            using MySqlConnection connection = new MySqlConnection(connectionString);
+
+            connection.Open();
+
+            int alertIdValue = 1; // This can be any value you're checking/inserting
+            string alertMessageValue = "New Alert Message"; // Message you want to insert or update
+
+            string upsertSQL = @"
+                                INSERT INTO alerts (alertId, conversationId) 
+                                VALUES (@alertId, @conversationId) 
+                                ON DUPLICATE KEY UPDATE conversationId = @conversationId;
+";
+
+            using MySqlCommand cmd = new MySqlCommand(upsertSQL, connection);
+            cmd.Parameters.AddWithValue("@alertId", alertIdValue);
+            cmd.Parameters.AddWithValue("@conversationId", result.Id);
+
+            int affectedRows = cmd.ExecuteNonQuery();
+
+            if (affectedRows > 0)
+            {
+                if (affectedRows == 1)
+                    Console.WriteLine("Insert operation performed.");
+                else if (affectedRows == 2)
+                    Console.WriteLine("Update operation performed.");
+            }
+            else
+            {
+                Console.WriteLine("No operation was performed.");
+            }
+
+            connection.Close();
         }
         catch (Exception ex)
         {
@@ -83,6 +121,7 @@ public class NotificationProcessor : INotificationProcessor
         };
         return adaptiveCardAttachment;
     }
+
     public Task ProcessNotification(string jsonPayload)
     {
         try
@@ -106,7 +145,7 @@ public class NotificationProcessor : INotificationProcessor
                 }
                 else
                 {
-                 
+
                     return Task.CompletedTask;
                 }
             }

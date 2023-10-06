@@ -26,9 +26,9 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             _settings = settings.Value;
         }
 
-        public async Task AcknowledgeAlert(string alertId)
+        public async Task AcknowledgeAlert(string alertId, string replyToId = null)
         {
-            var payload = new {isBulk = "false", alertId = alertId};
+            var payload = new {isBulk = "false", alertId = alertId, replyToId = replyToId};
             await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
                 payload);
         }

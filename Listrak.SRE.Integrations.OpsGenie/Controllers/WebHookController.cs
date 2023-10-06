@@ -5,6 +5,7 @@ using Listrak.SRE.Integrations.OpsGenie.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
+using MySqlConnector;
 
 namespace Listrak.SRE.Integrations.OpsGenie
 {
@@ -44,6 +45,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
                     // Send to EvenTHub
                     await _webHookProducer.Produce(data);
                     return Ok("thanks");
+
                 }
             }
             catch (Exception e)

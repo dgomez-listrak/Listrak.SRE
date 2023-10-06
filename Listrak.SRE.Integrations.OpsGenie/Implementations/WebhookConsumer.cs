@@ -15,18 +15,19 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         private readonly IBot Bot;
         
         private readonly ILogger<WebhookConsumer> _logger;
-        private readonly INotificationProcessor _notificationProcessor;
+        private readonly IOpsGenieHandler _opsGenieHandler;
 
-        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ILogger<WebhookConsumer> logger, INotificationProcessor notificationProcessor)
+        public WebhookConsumer(IBotFrameworkHttpAdapter adapter, IBot bot, ILogger<WebhookConsumer> logger, IOpsGenieHandler opsGenieHandler)
         {
             Adapter = adapter;
             Bot = bot;
             _logger = logger;
-            _notificationProcessor = notificationProcessor;
+            _opsGenieHandler = opsGenieHandler;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            return Task.CompletedTask; // For local testing
 
             var config = new ConsumerConfig
             {
@@ -55,7 +56,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
                             var cr = consumer.Consume();
                             _logger.LogInformation($"Consumed message '{cr.Value}' from topic '{cr.Topic}, partition {cr.Partition}, at offset {cr.Offset}'");
                             _logger.LogInformation("Sending to Notification Processor");
-                            _notificationProcessor.ProcessNotification(cr.Message.Value);
+                            _opsGenieHandler.ProcessNotification(cr.Message.Value);
                         }
                         catch (ConsumeException e)
                         {

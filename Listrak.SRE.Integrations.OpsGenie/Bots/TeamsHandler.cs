@@ -21,12 +21,12 @@ using Newtonsoft.Json.Linq;
 namespace Listrak.SRE.Integrations.OpsGenie.Bots
 {
 
-    public class NotificationCardHandler : TeamsActivityHandler
+    public class TeamsHandler : TeamsActivityHandler
     {
         private readonly ILogger<WebhookConsumer> _logger;
         private readonly IOpsGenieAPI _api;
 
-        public NotificationCardHandler(ILogger<WebhookConsumer> logger, IOpsGenieAPI api)
+        public TeamsHandler(ILogger<WebhookConsumer> logger, IOpsGenieAPI api)
         {
             _logger = logger;
             _api = api;
@@ -52,6 +52,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                     switch (value.type.ToLower())
                     {
                         case "ack":
+                            /// Just do the ACK here via the API call, let the response come back from OG in the other class and then do the card update
                             // do http post to  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge
                             //HttpWebRequest request = new HttpWebRequest($"https://lstrk.app.opsgenie.com/webapi/alert/acknowledge?isBulk=false&alertId={value.alertId}");
                             _api.AcknowledgeAlert(value.alertId);
@@ -106,7 +107,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             activity.Id = turnContext.Activity.ReplyToId;
                             activity.Conversation.Id = turnContext.Activity.Conversation.Id;
 
-                            
+                            // now we can't make this 
                             
 
 

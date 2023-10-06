@@ -56,8 +56,8 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IWebhookConsumer, WebhookConsumer>();
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
             services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-            services.AddSingleton<INotificationProcessor, NotificationProcessor>();
-            services.AddTransient<IBot, NotificationCardHandler>();
+            services.AddSingleton<IOpsGenieHandler, OpsGenieHandler>();
+            services.AddTransient<IBot, TeamsHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
