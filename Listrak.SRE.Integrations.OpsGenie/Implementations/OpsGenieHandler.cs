@@ -29,6 +29,7 @@ public class OpsGenieHandler : IOpsGenieHandler
 {
     private readonly string _unackedCard = Path.Combine(".", "Resources", "AlertCard.json");
     private readonly string _ackedCard = Path.Combine(".", "Resources", "AckedAlertCard.json");
+    private readonly string _closedCard = Path.Combine(".", "Resources", "ClosedCard.json");
     private readonly ILogger<OpsGenieHandler> _logger;
 
     private readonly string _appPassword;
@@ -99,6 +100,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             {
                 "Acknowledged" => BuildNotificationCard(_ackedCard, message),
                 "Unacknowledge" => BuildNotificationCard(_unackedCard, message),
+                "Closed" => BuildNotificationCard(_closedCard, message),
                 _ => BuildNotificationCard(_unackedCard, message) // default case
             };
 
