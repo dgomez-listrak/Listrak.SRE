@@ -23,18 +23,19 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             try
             {
                 var message = payload.Action != null ? payload.Alert : payload.Data;
-                string upsertSQL = @"INSERT INTO og_alerts ( alertId, conversationId, dateCreated, dateModified, status, priority, cardData, alertPayload) 
-                                VALUES (@alertId, @conversationId, @dateCreated, @dateModified, @status, @priority, @cardData, @alertPayload) 
-                                ON DUPLICATE KEY UPDATE 
-                                  
-                                    conversationId = @conversationId,
-                                    dateCreated = @dateCreated,
-                                    dateModified = @dateModified,
-                                    status = @status,
-                                    priority = @priority,
-                                    cardData = @cardData,
-                                    alertPayload = @alertPayload;
-                                ";
+                string upsertSQL = @"
+                        INSERT INTO og_alerts (alertId, conversationId, dateCreated, dateModified, status, priority, cardData, alertPayload) 
+                        VALUES (@alertId, @conversationId, @dateCreated, @dateModified, @status, @priority, @cardData, @alertPayload) 
+                        ON DUPLICATE KEY UPDATE 
+                            dateCreated = @dateCreated,
+                            dateModified = @dateModified,
+                            status = @status,
+                            priority = @priority,
+                            cardData = @cardData,
+                            alertPayload = @alertPayload,
+                            conversationId = IF(conversationId IS NULL OR conversationId = '', @conversationId, conversationId);
+                        ";
+
 
                 using MySqlConnection connection = new MySqlConnection(connectionString);
                 connection.Open();
