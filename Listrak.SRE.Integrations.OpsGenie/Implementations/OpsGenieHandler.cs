@@ -97,6 +97,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
             var cardAttachment = BuildNotificationCard(_card, message);
+            //largerString = largerString.Replace("\"title\": \"Acknowledge\",", "\"title\": \"Unacknowledge\",");
 
             var activity = new Activity
             {
