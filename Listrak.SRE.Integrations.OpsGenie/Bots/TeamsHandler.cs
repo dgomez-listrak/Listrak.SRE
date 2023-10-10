@@ -58,7 +58,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                             _api.AcknowledgeAlert(value.alertId);
                             // Do some card update
 
-                            var message = new
+                            /*var message = new
                             {
                                 Title = $"Title Variable UPDATED",
                                 Description = $"Description Variable",
@@ -76,7 +76,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                                 ChannelId = string.Empty
                                 
                             };
-                            */
+                            #1#
                             var activity = turnContext.Activity;
 
                             //var activity = MessageFactory.Attachment(cardAttachment);
@@ -100,7 +100,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                                 Text = "UpdateCardAction",
                                 Value = data
                             });
-                            */
+                            #1#
 
                             //var activity = MessageFactory.Attachment(card.ToAttachment());
                             activity = turnContext.Activity;
@@ -113,6 +113,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
 
                             var x = await turnContext.UpdateActivityAsync(activity, cancellationToken);
                             Console.WriteLine(x.ToString());
+                            */
 
                             break;
 
