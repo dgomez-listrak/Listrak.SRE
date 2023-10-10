@@ -51,6 +51,10 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                     var value = JsonConvert.DeserializeObject<NotificationActionModel>(turnContext.Activity.Value.ToString());
                     switch (value.type.ToLower())
                     {
+                        case "unack":
+                            _api.UnacknowledgeAlert(value.alertId);
+                            break;
+
                         case "ack":
                             /// Just do the ACK here via the API call, let the response come back from OG in the other class and then do the card update
                             // do http post to  https://lstrk.app.opsgenie.com/webapi/alert/acknowledge

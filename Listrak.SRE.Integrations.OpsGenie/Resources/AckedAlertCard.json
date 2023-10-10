@@ -61,7 +61,7 @@
       "type": "Action.Submit",
       "title": "Unacknowledge",
       "data": {
-        "type": "UnAck",
+        "type": "Unack",
         "alertId": "${alertId}"
       }
     },
