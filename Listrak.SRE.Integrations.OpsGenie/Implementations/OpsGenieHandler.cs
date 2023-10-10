@@ -1,8 +1,13 @@
-﻿using AdaptiveCards.Templating;
+﻿////
+///
+/// So, on data coming from OG, they all should have the alert {} json object beneath "action":"Action" within {}.
+/// API calls to get data, which we'll need to get the full alert data will be different, it will just be {data{}}
+/// so we can then have a model for incoming OG alerts, even tohugh those after CREATE will lack some data
+/// and those for API gets
+///
+/// 
+using AdaptiveCards.Templating;
 using Listrak.SRE.Integrations.OpsGenie.Interfaces;
-using Listrak.SRE.Integrations.OpsGenie.Models;
-using Microsoft.Bot.Builder;
-using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
@@ -15,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Listrak.SRE.Integrations.OpsGenie.Models;
+using Confluent.Kafka;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
@@ -27,8 +34,9 @@ public class OpsGenieHandler : IOpsGenieHandler
     private readonly string _appId;
     private readonly string _serviceUrl;
     private readonly string _channelId;
+    private readonly IMySqlAdapter _mySqlAdapter;
 
-    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration)
+    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration, IMySqlAdapter mySqlAdapter)
     {
 
         _logger = logger;
@@ -36,10 +44,12 @@ public class OpsGenieHandler : IOpsGenieHandler
         _appPassword = configuration["MicrosoftAppPassword"];
         _serviceUrl = configuration["ServiceUrl"];
         _channelId = configuration["ChannelId"];
+        _mySqlAdapter = mySqlAdapter;
     }
 
-    public async Task SendMessageAsync(string serviceUrl, string channelId, object message)
+    public async Task<string> SendMessageAsync(string serviceUrl, string channelId, AlertData message)
     {
+        ResourceResponse result = new ResourceResponse();
         _logger.LogInformation("[TeamsNotifier]  SendMessageAsync to Teams Begin");
         System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
         try
@@ -60,7 +70,7 @@ public class OpsGenieHandler : IOpsGenieHandler
 
             activity.Attachments = new List<Attachment>() { cardAttachment };
 
-            var result = await connectorClient.Conversations.SendToConversationAsync(activity);
+            result = await connectorClient.Conversations.SendToConversationAsync(activity);
 
             activity.Id = result.Id;
             ////activity.Attachments[0].Content = new JObject { ["text"] = "This is a test" };
@@ -68,39 +78,38 @@ public class OpsGenieHandler : IOpsGenieHandler
             Console.WriteLine(result);
             _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
 
-            string connectionString = "MYSQLCONNSTR_Listrk_SRE";
-            using MySqlConnection connection = new MySqlConnection(connectionString);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
+        }
 
-            connection.Open();
+        return result.Id.ToString();
+    }
 
-            int alertIdValue = 1; // This can be any value you're checking/inserting
-            string alertMessageValue = "New Alert Message"; // Message you want to insert or update
+    public async Task UpdateMessageAsync(string serviceUrl, string channelId, AlertData message, string conversationId)
+    {
+        ResourceResponse result = new ResourceResponse();
+        _logger.LogInformation("[TeamsNotifier]  UpdateMessageAsync to Teams Begin");
+        System.Diagnostics.Trace.WriteLine("UpdateMessageAsync to Teams");
+        try
+        {
+            var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
+            var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
+            var cardAttachment = BuildNotificationCard(_card, message);
 
-            string upsertSQL = @"
-                                INSERT INTO alerts (alertId, conversationId) 
-                                VALUES (@alertId, @conversationId) 
-                                ON DUPLICATE KEY UPDATE conversationId = @conversationId;
-";
-
-            using MySqlCommand cmd = new MySqlCommand(upsertSQL, connection);
-            cmd.Parameters.AddWithValue("@alertId", alertIdValue);
-            cmd.Parameters.AddWithValue("@conversationId", result.Id);
-
-            int affectedRows = cmd.ExecuteNonQuery();
-
-            if (affectedRows > 0)
+            var activity = new Activity
             {
-                if (affectedRows == 1)
-                    Console.WriteLine("Insert operation performed.");
-                else if (affectedRows == 2)
-                    Console.WriteLine("Update operation performed.");
-            }
-            else
-            {
-                Console.WriteLine("No operation was performed.");
-            }
-
-            connection.Close();
+                Type = ActivityTypes.Message,
+                ServiceUrl = serviceUrl,
+                ChannelId = channelId,
+                Conversation = new ConversationAccount(id: channelId)
+            };
+            activity.Attachments = new List<Attachment>() { cardAttachment };
+            activity.Id = conversationId;
+            await connectorClient.Conversations.UpdateActivityAsync(activity);
+            Console.WriteLine(result);
+            _logger.LogInformation("[UpdateMessageAsync] Message sent...hopefully");
         }
         catch (Exception ex)
         {
@@ -122,45 +131,56 @@ public class OpsGenieHandler : IOpsGenieHandler
         return adaptiveCardAttachment;
     }
 
-    public Task ProcessNotification(string jsonPayload)
+    public async Task ProcessNotification(string jsonPayload)
     {
         try
         {
-            JObject jsonObject = JObject.Parse(jsonPayload);
-            string actionValue = jsonObject["action"]?.ToString();
+            var notification = JsonConvert.DeserializeObject<OpsGenieNotification>(jsonPayload);
+            var payloadToSend = notification.Action != null ? notification.Alert : notification.Data;
 
-            IMessagePayload messagePayload;
-            if (actionValue?.ToLower() == "create")
+            Console.WriteLine("Create payload from OG");
+
+            // If action is 'create', we expect the payload in 'Alert'
+            if (notification.Alert != null)
             {
-                messagePayload = new NewAlertMessagePayload();
-            }
-            else
-            {
-                // Log the jsonPayload if the actionValue is not "create"
-                _logger.LogError($"[WebhookConsumer] Payload: {jsonPayload}");
-                _logger.LogError($"[WebhookConsumer] ActionType was: {actionValue}");
-                if (jsonObject["data"] != null)
+                // Process using notification.Alert
+                notification.Alert.Status = notification.Action?.ToLower() switch
                 {
-                    messagePayload = new DataMessagePayload();
+                    "create" => "New",
+                    "close" => "Closed",
+                    "addnote" => "Updated",
+                    "acknowledge" => "Acknowledged",
+                    _ => "Unknown"  // default case
+                };
+
+                payloadToSend = notification.Alert;
+
+                var existingConversationId = _mySqlAdapter.GetConverationId(notification.Alert.UnifiedAlertId);
+                if (existingConversationId != null)
+                {
+                    // Call UpdateMessageAsync if conversationId exists
+                    await UpdateMessageAsync(_serviceUrl, _channelId, payloadToSend, existingConversationId);
                 }
                 else
                 {
-
-                    return Task.CompletedTask;
+                    // Call SendMessageAsync if conversationId does not exist
+                    var result = await SendMessageAsync(_serviceUrl, _channelId, payloadToSend);
+                    payloadToSend.ConversationId = result;
                 }
-            }
 
-            var message = messagePayload.CreateMessagePayload(jsonObject);
-            var result = SendMessageAsync(_serviceUrl, _channelId, message);
+                await _mySqlAdapter.LogToMysql(notification);
+            }
+            else
+            {
+                _logger.LogError($"[WebhookConsumer] Expected 'Alert' payload for 'create' action. Payload: {jsonPayload}");
+            }
         }
         catch (Exception e)
         {
             Console.WriteLine($"[WebhookConsumer] Error occurred: {e.Message}");
             _logger.LogError($"[WebhookConsumer] Error occurred: {e.Message}");
-            return Task.FromException(e);
+            throw;
         }
-        return Task.CompletedTask;
     }
-
 
 }

@@ -27,7 +27,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask; // For local testing
+            //return Task.CompletedTask; // For local testing
 
             var config = new ConsumerConfig
             {

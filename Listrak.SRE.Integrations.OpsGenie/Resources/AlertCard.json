@@ -14,7 +14,7 @@
             {
               "type": "Image",
               "style": "Person",
-              "url": "https://ogti-app.scm.azurewebsites.net/api/vfs/site/wwwroot/Resources/og_icon.png",
+              "url": "https://play-lh.googleusercontent.com/Gg8C7Pam7AWPzD2JJMMqo5VSixKzEFcXD78P0_ibyeyjKC3-pLTlOtieuCmpBDo2-w",
               "size": "small"
             }
           ]
@@ -25,7 +25,7 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "[${title}](https://opsg.in/a/i/lstrk/${alertId})",
+              "text": "[${message}](https://opsg.in/a/i/lstrk/${alertId})",
               "weight": "bolder",
               "spacing": "none"
             }
