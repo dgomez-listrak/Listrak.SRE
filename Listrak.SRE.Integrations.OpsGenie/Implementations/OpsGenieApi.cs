@@ -29,21 +29,21 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         public async Task AcknowledgeAlert(string alertId)
         {
             var payload = new {isBulk = "false", alertId = alertId};
-            await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
+            await SendRequestAsync($"{_settings.BaseUrl}/alerts/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
                 payload);
         }
 
         public async Task UnacknowledgeAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
+            await SendRequestAsync($"{_settings.BaseUrl}/alerts/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
                 payload);
         }
 
         public async Task CloseAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            await SendRequestAsync($"{_settings.BaseUrl}/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
+            await SendRequestAsync($"{_settings.BaseUrl}/alerts/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
         }
 
 
