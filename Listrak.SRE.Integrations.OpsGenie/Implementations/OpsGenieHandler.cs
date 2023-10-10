@@ -27,7 +27,8 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
 public class OpsGenieHandler : IOpsGenieHandler
 {
-    private readonly string _card = Path.Combine(".", "Resources", "AlertCard.json");
+    private readonly string _unackedCard = Path.Combine(".", "Resources", "AlertCard.json");
+    private readonly string _ackedCard = Path.Combine(".", "Resources", "AckedAlertCard.json");
     private readonly ILogger<OpsGenieHandler> _logger;
 
     private readonly string _appPassword;
@@ -57,7 +58,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
 
-            var cardAttachment = BuildNotificationCard(_card, message);
+            var cardAttachment = BuildNotificationCard(_unackedCard, message);
 
             var activity = new Activity
             {
@@ -73,8 +74,6 @@ public class OpsGenieHandler : IOpsGenieHandler
             result = await connectorClient.Conversations.SendToConversationAsync(activity);
 
             activity.Id = result.Id;
-            ////activity.Attachments[0].Content = new JObject { ["text"] = "This is a test" };
-            ////await connectorClient.Conversations.UpdateActivityAsync(activity);
             Console.WriteLine(result);
             _logger.LogInformation("[SendMessageAsync] Message sent...hopefully");
 
@@ -96,8 +95,13 @@ public class OpsGenieHandler : IOpsGenieHandler
         {
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-            var cardAttachment = BuildNotificationCard(_card, message);
-            //largerString = largerString.Replace("\"title\": \"Acknowledge\",", "\"title\": \"Unacknowledge\",");
+            var cardAttachment = message.Status switch
+            {
+                "Acknowledge" => BuildNotificationCard(_ackedCard, message),
+                "Unacknowledge" => BuildNotificationCard(_unackedCard, message),
+                _ => BuildNotificationCard(_ackedCard, message) // default case
+            };
+
 
             var activity = new Activity
             {

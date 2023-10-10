@@ -59,10 +59,10 @@
   "actions": [
     {
       "type": "Action.Submit",
-      "title": "Acknowledge",
+      "title": "Unacknowledge",
       "data": {
-        "type": "Ack",
-        "alertId": "${alertId}"        
+        "type": "UnAck",
+        "alertId": "${alertId}"
       }
     },
     {
@@ -70,9 +70,9 @@
       "title": "Close",
       "data": {
         "type": "Close",
-        "alertId": "${alertId}"        
+        "alertId": "${alertId}"
       }
-    },    
+    },
     {
       "type": "Action.OpenUrl",
       "title": "Add Note",
