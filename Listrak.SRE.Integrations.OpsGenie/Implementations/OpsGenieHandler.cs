@@ -97,7 +97,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
             var cardAttachment = message.Status switch
             {
-                "Acknowledge" => BuildNotificationCard(_ackedCard, message),
+                "Acknowledged" => BuildNotificationCard(_ackedCard, message),
                 "Unacknowledge" => BuildNotificationCard(_unackedCard, message),
                 _ => BuildNotificationCard(_unackedCard, message) // default case
             };
