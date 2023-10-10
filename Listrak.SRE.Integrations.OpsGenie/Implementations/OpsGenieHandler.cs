@@ -99,7 +99,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             {
                 "Acknowledge" => BuildNotificationCard(_ackedCard, message),
                 "Unacknowledge" => BuildNotificationCard(_unackedCard, message),
-                _ => BuildNotificationCard(_ackedCard, message) // default case
+                _ => BuildNotificationCard(_unackedCard, message) // default case
             };
 
 
@@ -155,7 +155,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                     "close" => "Closed",
                     "addnote" => "Updated",
                     "acknowledge" => "Acknowledged",
-                    _ => "Unknown"  // default case
+                    _ => "New"  // default case
                 };
 
                 payloadToSend = notification.Alert;
