@@ -18,7 +18,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             _logger = logger;
         }
 
-        public async Task LogToMysql(OpsGenieNotification payload)
+        public void LogToMysql(OpsGenieNotification payload)
         {
             try
             {
@@ -84,6 +84,30 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             }
 
             return existingConversationId;
+        }
+
+        public bool CheckExistingAlert(string alertId)
+        {
+            string checkQuery = "SELECT alertId FROM og_alerts WHERE alertId = @alertId";
+            string existingAlertId = null;
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using MySqlCommand cmdCheck = new MySqlCommand(checkQuery, connection);
+                cmdCheck.Parameters.AddWithValue("@alertId", alertId);
+
+                // Execute the query and get the conversationId
+                var reader = cmdCheck.ExecuteReader();
+
+                if (reader.Read()) // Means alertId exists in the database
+                {
+                    existingAlertId = reader.GetString("conversationId");
+                }
+
+                connection.Close();
+            }
+            return !string.IsNullOrEmpty(existingAlertId);
         }
     }
 }

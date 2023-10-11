@@ -56,9 +56,10 @@ public class OpsGenieHandler : IOpsGenieHandler
         System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
         try
         {
+            if (!_mySqlAdapter.CheckExistingAlert(message.UnifiedAlertId))
+                return string.Empty; // exists in the db already
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-
             var cardAttachment = BuildNotificationCard(_unackedCard, message);
 
             var activity = new Activity
@@ -172,10 +173,11 @@ public class OpsGenieHandler : IOpsGenieHandler
                 {
                     // Call SendMessageAsync if conversationId does not exist
                     var result = await SendMessageAsync(_serviceUrl, _channelId, payloadToSend);
-                    payloadToSend.ConversationId = result;
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        payloadToSend.ConversationId = result;
+                    }
                 }
-
-                await _mySqlAdapter.LogToMysql(notification);
             }
             else
             {
