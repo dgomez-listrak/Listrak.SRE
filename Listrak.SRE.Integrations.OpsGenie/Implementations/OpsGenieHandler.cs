@@ -178,6 +178,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                         payloadToSend.ConversationId = result;
                     }
                 }
+                _mySqlAdapter.LogToMysql(notification);
             }
             else
             {
