@@ -56,7 +56,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         System.Diagnostics.Trace.WriteLine("SendMessageAsync to Teams");
         try
         {
-            if (!_mySqlAdapter.CheckExistingAlert(message.UnifiedAlertId))
+            if (_mySqlAdapter.CheckExistingAlert(message.UnifiedAlertId))
                 return string.Empty; // exists in the db already
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
