@@ -49,7 +49,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         _mySqlAdapter = mySqlAdapter;
     }
 
-    public async Task<string> SendMessageAsync(string serviceUrl, string channelId, AlertData message)
+    public string SendMessageAsync(string serviceUrl, string channelId, AlertData message)
     {
         ResourceResponse result = new ResourceResponse();
         _logger.LogInformation("[TeamsNotifier]  SendMessageAsync to Teams Begin");
@@ -73,7 +73,7 @@ public class OpsGenieHandler : IOpsGenieHandler
 
             activity.Attachments = new List<Attachment>() { cardAttachment };
 
-            result = await connectorClient.Conversations.SendToConversationAsync(activity);
+            result = connectorClient.Conversations.SendToConversationAsync(activity).Result;
 
             activity.Id = result.Id;
             Console.WriteLine(result);
@@ -88,7 +88,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         return result.Id.ToString();
     }
 
-    public async Task UpdateMessageAsync(string serviceUrl, string channelId, AlertData message, string conversationId)
+    public void UpdateMessageAsync(string serviceUrl, string channelId, AlertData message, string conversationId)
     {
         ResourceResponse result = new ResourceResponse();
         _logger.LogInformation("[TeamsNotifier]  UpdateMessageAsync to Teams Begin");
@@ -115,7 +115,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             };
             activity.Attachments = new List<Attachment>() { cardAttachment };
             activity.Id = conversationId;
-            await connectorClient.Conversations.UpdateActivityAsync(activity);
+            connectorClient.Conversations.UpdateActivityAsync(activity);
             Console.WriteLine(result);
             _logger.LogInformation("[UpdateMessageAsync] Message sent...hopefully");
         }
@@ -139,7 +139,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         return adaptiveCardAttachment;
     }
 
-    public async Task ProcessNotification(string jsonPayload)
+    public void ProcessNotification(string jsonPayload)
     {
         try
         {
@@ -167,12 +167,12 @@ public class OpsGenieHandler : IOpsGenieHandler
                 if (existingConversationId != null)
                 {
                     // Call UpdateMessageAsync if conversationId exists
-                    await UpdateMessageAsync(_serviceUrl, _channelId, payloadToSend, existingConversationId);
+                    UpdateMessageAsync(_serviceUrl, _channelId, payloadToSend, existingConversationId);
                 }
                 else
                 {
                     // Call SendMessageAsync if conversationId does not exist
-                    var result = await SendMessageAsync(_serviceUrl, _channelId, payloadToSend);
+                    var result = SendMessageAsync(_serviceUrl, _channelId, payloadToSend);
                     if (!string.IsNullOrEmpty(result))
                     {
                         payloadToSend.ConversationId = result;

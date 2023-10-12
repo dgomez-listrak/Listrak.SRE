@@ -6,7 +6,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Interfaces
 {
     public interface IOpsGenieHandler
     {
-        Task<string> SendMessageAsync(string serviceUrl, string channelId, AlertData message);
-        Task ProcessNotification(string payload);
+        string SendMessageAsync(string serviceUrl, string channelId, AlertData message);
+        void ProcessNotification(string payload);
     }
 }

@@ -1,16 +1,11 @@
 ﻿using Listrak.SRE.Integrations.OpsGenie.Interfaces;
-using Newtonsoft.Json;
-using System.IO;
-using System.Net;
-using System;
-using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Net.Http;
 using System.Text;
-using System.Configuration;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Recognizers.Definitions;
+using System.Threading.Tasks;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations
 {
@@ -26,28 +21,28 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             _settings = settings.Value;
         }
 
-        public async Task AcknowledgeAlert(string alertId)
+        public void AcknowledgeAlert(string alertId)
         {
-            var payload = new {isBulk = "false", alertId = alertId};
-            await SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
+            var payload = new { isBulk = "false", alertId = alertId };
+            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
                 payload);
         }
 
-        public async Task UnacknowledgeAlert(string alertId)
+        public void UnacknowledgeAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            await SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
-                payload);
+            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
+               payload);
         }
 
-        public async Task CloseAlert(string alertId)
+        public void CloseAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            await SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
+            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
         }
 
 
-        public async Task CommentOnAlert(string alertId, string comment)
+        public void CommentOnAlert(string alertId, string comment)
         {
             // Similar payload and endpoint structure can go here.
         }

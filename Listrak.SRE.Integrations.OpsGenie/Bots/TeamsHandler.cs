@@ -41,15 +41,15 @@ namespace Listrak.SRE.Integrations.OpsGenie.Bots
                     switch (value.type.ToLower())
                     {
                         case "unack":
-                            await _api.UnacknowledgeAlert(value.alertId);
+                            _api.UnacknowledgeAlert(value.alertId);
                             break;
 
                         case "ack":
-                            await _api.AcknowledgeAlert(value.alertId);
+                            _api.AcknowledgeAlert(value.alertId);
                             break;
 
                         case "close":
-                            await _api.CloseAlert(value.alertId);
+                            _api.CloseAlert(value.alertId);
                             break;
                     }
                 }
