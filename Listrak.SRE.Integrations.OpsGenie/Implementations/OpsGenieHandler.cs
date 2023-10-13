@@ -22,6 +22,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Listrak.SRE.Integrations.OpsGenie.Models;
 using Confluent.Kafka;
+using Polly;
+using System.Data.Common;
+using AdaptiveCards;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
@@ -60,7 +63,8 @@ public class OpsGenieHandler : IOpsGenieHandler
                 return string.Empty; // exists in the db already
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-            var cardAttachment = BuildNotificationCard(_unackedCard, message);
+            var newCard = NewCardBuilder(message);
+            //var cardAttachment = BuildNotificationCard(_unackedCard, message);
 
             var activity = new Activity
             {
@@ -70,8 +74,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                 Conversation = new ConversationAccount(id: channelId)
             };
 
-
-            activity.Attachments = new List<Attachment>() { cardAttachment };
+            activity.Attachments = new List<Attachment>() { newCard };
 
             result = connectorClient.Conversations.SendToConversationAsync(activity).Result;
 
@@ -136,8 +139,103 @@ public class OpsGenieHandler : IOpsGenieHandler
             ContentType = "application/vnd.microsoft.card.adaptive",
             Content = JsonConvert.DeserializeObject(cardJson)
         };
+
         return adaptiveCardAttachment;
     }
+
+    private Attachment NewCardBuilder(AlertData myData)
+    {
+        AdaptiveCard card = new AdaptiveCard()
+        {
+            Body = new List<AdaptiveElement>()
+        {
+            new AdaptiveColumnSet()
+            {
+                Speak = "OpsGenie Alert",
+                Columns = new List<AdaptiveColumn>()
+                {
+                    new AdaptiveColumn()
+                    {
+                        Width = "auto",
+                        Items = new List<AdaptiveElement>()
+                        {
+                            new AdaptiveImage()
+                            {
+                                UrlString = "https://play-lh.googleusercontent.com/Gg8C7Pam7AWPzD2JJMMqo5VSixKzEFcXD78P0_ibyeyjKC3-pLTlOtieuCmpBDo2-w",
+                                Size = AdaptiveImageSize.Small,
+                                Style = AdaptiveImageStyle.Person
+                            }
+                        }
+                    },
+                    new AdaptiveColumn()
+                    {
+                        Width = "2",
+                        Items = new List<AdaptiveElement>()
+                        {
+                            new AdaptiveTextBlock()
+                            {
+                                Text = $"[${myData.Message}](https://opsg.in/a/i/lstrk/${myData.UnifiedAlertId})",
+                                Weight = AdaptiveTextWeight.Bolder,
+                                Spacing = AdaptiveSpacing.None
+                            }
+                        }
+                    }
+                }
+            },
+            new AdaptiveTextBlock()
+            {
+                Text = "${myData.Description}",
+                Wrap = true
+            },
+            new AdaptiveFactSet()
+            {
+                Facts = new List<AdaptiveFact>()
+                {
+                    new AdaptiveFact() { Title = "Priority: ", Value = "${myData.Priority}" },
+                    new AdaptiveFact() { Title = "Status: ", Value = "${myData.Status}" },
+                    new AdaptiveFact() { Title = "Source: ", Value = "${myData.Source}" }
+                }
+            }
+        },
+            Actions = new List<AdaptiveAction>()
+        {
+            new AdaptiveSubmitAction()
+            {
+                Title = "Acknowledge",
+                DataJson = "{\"type\": \"Ack\", \"alertId\": \"${myData.AlertId}\"}"
+            },
+            new AdaptiveSubmitAction()
+            {
+                Title = "Close",
+                DataJson = "{\"type\": \"Close\", \"alertId\": \"${myData.AlertId}\"}"
+            },
+            new AdaptiveOpenUrlAction()
+            {
+                Title = "Add Note",
+                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            },
+            new AdaptiveOpenUrlAction()
+            {
+                Title = "Snooze",
+                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            },
+            new AdaptiveOpenUrlAction()
+            {
+                Title = "Incident",
+                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            }
+        }
+        };
+
+        Attachment attachment = new Attachment()
+        {
+            ContentType = AdaptiveCard.ContentType,
+            Content = card
+        };
+
+        return attachment;
+    }
+
 
     public void ProcessNotification(string jsonPayload)
     {
