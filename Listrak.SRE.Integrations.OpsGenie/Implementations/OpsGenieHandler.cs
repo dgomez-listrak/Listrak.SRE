@@ -174,7 +174,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                         {
                             new AdaptiveTextBlock()
                             {
-                                Text = $"[${myData.Message}](https://opsg.in/a/i/lstrk/${myData.UnifiedAlertId})",
+                                Text = $"[{myData.Message}](https://opsg.in/a/i/lstrk/${myData.UnifiedAlertId})",
                                 Weight = AdaptiveTextWeight.Bolder,
                                 Spacing = AdaptiveSpacing.None
                             }
@@ -184,16 +184,16 @@ public class OpsGenieHandler : IOpsGenieHandler
             },
             new AdaptiveTextBlock()
             {
-                Text = "${myData.Description}",
+                Text = $"{myData.Description}",
                 Wrap = true
             },
             new AdaptiveFactSet()
             {
                 Facts = new List<AdaptiveFact>()
                 {
-                    new AdaptiveFact() { Title = "Priority: ", Value = "${myData.Priority}" },
-                    new AdaptiveFact() { Title = "Status: ", Value = "${myData.Status}" },
-                    new AdaptiveFact() { Title = "Source: ", Value = "${myData.Source}" }
+                    new AdaptiveFact() { Title = "Priority: ", Value = $"{myData.Priority}" },
+                    new AdaptiveFact() { Title = "Status: ", Value = $"{myData.Status}" },
+                    new AdaptiveFact() { Title = "Source: ", Value = $"{myData.Source}" }
                 }
             }
         },
@@ -202,12 +202,14 @@ public class OpsGenieHandler : IOpsGenieHandler
             new AdaptiveSubmitAction()
             {
                 Title = "Acknowledge",
-                DataJson = "{\"type\": \"Ack\", \"alertId\": \"${myData.AlertId}\"}"
+                DataJson = $"{{\"type\": \"Ack\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
+
             },
             new AdaptiveSubmitAction()
             {
                 Title = "Close",
-                DataJson = "{\"type\": \"Close\", \"alertId\": \"${myData.AlertId}\"}"
+                DataJson = $"{{\"type\": \"Close`\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
+
             },
             new AdaptiveOpenUrlAction()
             {
