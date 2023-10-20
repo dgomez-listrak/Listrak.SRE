@@ -241,6 +241,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             DataJson = $"{{\"type\": \"UnAck\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
 
         });
+        attachment.Content = x;
         return attachment;
     }
 
