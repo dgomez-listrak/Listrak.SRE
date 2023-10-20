@@ -228,13 +228,19 @@ public class OpsGenieHandler : IOpsGenieHandler
             }
         }
         };
-
+        
         Attachment attachment = new Attachment()
         {
             ContentType = AdaptiveCard.ContentType,
             Content = card
         };
+        var x = attachment.Content as AdaptiveCard;
+        x.Actions.Add(new AdaptiveSubmitAction()
+        {
+            Title = "UnAcknowledge",
+            DataJson = $"{{\"type\": \"UnAck\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
 
+        });
         return attachment;
     }
 
