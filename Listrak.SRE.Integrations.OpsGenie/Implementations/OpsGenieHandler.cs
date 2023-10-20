@@ -88,11 +88,11 @@ public class OpsGenieHandler : IOpsGenieHandler
             switch (message.Status.ToLower())
             {
                 case "acknowledged":
-                    _cardBuilder.AddUnAckButton(card, message);
+                    card = _cardBuilder.AddUnAckButton(card, message);
                     break;
 
                 case "new":
-                    _cardBuilder.AddAckButton(card, message);
+                    card = _cardBuilder.AddAckButton(card, message);
                     break;
             }
             card = _cardBuilder.AddNoteButton(card, message);
