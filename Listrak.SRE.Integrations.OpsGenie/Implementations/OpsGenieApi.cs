@@ -24,21 +24,21 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
         public void AcknowledgeAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
+            SendUpdateRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/acknowledge?identifierType=id", HttpMethod.Post,
                 payload);
         }
 
         public void UnacknowledgeAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
+            SendUpdateRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/unacknowledge?identifierType=id", HttpMethod.Post,
                payload);
         }
 
         public void CloseAlert(string alertId)
         {
             var payload = new { isBulk = "false", alertId = alertId };
-            SendRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
+            SendUpdateRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}/close?identifierType=id", HttpMethod.Post, payload);
         }
 
 
@@ -47,7 +47,29 @@ namespace Listrak.SRE.Integrations.OpsGenie.Implementations
             // Similar payload and endpoint structure can go here.
         }
 
-        private async Task SendRequestAsync(string url, HttpMethod method, object payload)
+        public OpsGenieStatus GetAlertStatus(string alertId)
+        {
+            var response = SendStatusRequestAsync($"{_settings.BaseUrl}/v2/alerts/{alertId}?identifierType=id", HttpMethod.Get);
+            var result = JsonConvert.DeserializeObject<OpsGenieStatus>(response.Result);
+            return result;
+        }
+
+        private async Task<string> SendStatusRequestAsync(string url, HttpMethod method)
+        {
+            var requestMessage = new HttpRequestMessage(method, url);
+
+            requestMessage.Headers.Add("Authorization", $"GenieKey {_settings.ApiKey}");
+
+            var response = await _httpClient.SendAsync(requestMessage);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Request failed: {response.StatusCode}");
+            }
+            return response.Content.ReadAsStringAsync().Result;
+        }
+
+        private async Task SendUpdateRequestAsync(string url, HttpMethod method, object payload = null)
         {
             var requestMessage = new HttpRequestMessage(method, url)
             {

@@ -21,8 +21,9 @@ public class OpsGenieHandler : IOpsGenieHandler
     private readonly string _channelId;
     private readonly IMySqlAdapter _mySqlAdapter;
     private readonly ICardBuilder _cardBuilder;
+    private readonly IOpsGenieAPI _api;
 
-    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration, IMySqlAdapter mySqlAdapter, ICardBuilder cardBuilder)
+    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration, IMySqlAdapter mySqlAdapter, ICardBuilder cardBuilder, IOpsGenieAPI api)
     {
 
         _logger = logger;
@@ -32,6 +33,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         _channelId = configuration["ChannelId"];
         _mySqlAdapter = mySqlAdapter;
         _cardBuilder = cardBuilder;
+        _api = api;
     }
 
     public string SendMessageAsync(string serviceUrl, string channelId, AlertData message)
@@ -93,6 +95,7 @@ public class OpsGenieHandler : IOpsGenieHandler
             // we'll need to make sure to update mysql as well, thinking of some kind of cron job to regularly check
             // ticket statuses and update accordingly if they're not
 
+            var x = _api.GetAlertStatus(message.UnifiedAlertId);
             switch (message.Status.ToLower())
             {
                 case "acknowledged":
