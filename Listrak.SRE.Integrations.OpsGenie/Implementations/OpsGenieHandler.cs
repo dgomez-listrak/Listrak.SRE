@@ -95,20 +95,22 @@ public class OpsGenieHandler : IOpsGenieHandler
             // we'll need to make sure to update mysql as well, thinking of some kind of cron job to regularly check
             // ticket statuses and update accordingly if they're not
 
-            var x = _api.GetAlertStatus(message.UnifiedAlertId);
-            switch (message.Status.ToLower())
+            var statusDetails = _api.GetAlertStatus(message.UnifiedAlertId);
+            if (statusDetails.Data.Status.ToLower() != "closed")
             {
-                case "acknowledged":
-                    card = _cardBuilder.AddUnAckButton(card, message);
-                    break;
+                card = statusDetails.Data.Acknowledged
+                    ? _cardBuilder.AddUnAckButton(card, message)
+                    : _cardBuilder.AddAckButton(card, message);
 
-                case "new":
-                    card = _cardBuilder.AddAckButton(card, message);
-                    break;
+                card = _cardBuilder.AddNoteButton(card, message);
+                card = _cardBuilder.AddCloseButton(card, message);
+                card = _cardBuilder.AddIncidentButton(card, message);
             }
-            card = _cardBuilder.AddNoteButton(card, message);
-            card = _cardBuilder.AddCloseButton(card, message);
-            card = _cardBuilder.AddIncidentButton(card, message);
+            else
+            {
+                card = _cardBuilder.AddNoteButton(card, message);
+                card = _cardBuilder.AddIncidentButton(card, message);
+            }
 
             var activity = new Activity
             {
