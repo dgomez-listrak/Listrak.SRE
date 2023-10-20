@@ -1,38 +1,18 @@
-﻿////
-///
-/// So, on data coming from OG, they all should have the alert {} json object beneath "action":"Action" within {}.
-/// API calls to get data, which we'll need to get the full alert data will be different, it will just be {data{}}
-/// so we can then have a model for incoming OG alerts, even tohugh those after CREATE will lack some data
-/// and those for API gets
-///
-/// 
-using AdaptiveCards.Templating;
-using Listrak.SRE.Integrations.OpsGenie.Interfaces;
+﻿using Listrak.SRE.Integrations.OpsGenie.Interfaces;
+using Listrak.SRE.Integrations.OpsGenie.Models;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MySqlConnector;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Listrak.SRE.Integrations.OpsGenie.Models;
-using Confluent.Kafka;
-using Polly;
-using System.Data.Common;
-using AdaptiveCards;
 
 namespace Listrak.SRE.Integrations.OpsGenie.Implementations;
 
 public class OpsGenieHandler : IOpsGenieHandler
 {
-    private readonly string _unackedCard = Path.Combine(".", "Resources", "AlertCard.json");
-    private readonly string _ackedCard = Path.Combine(".", "Resources", "AckedAlertCard.json");
-    private readonly string _closedCard = Path.Combine(".", "Resources", "ClosedCard.json");
     private readonly ILogger<OpsGenieHandler> _logger;
 
     private readonly string _appPassword;
@@ -40,8 +20,9 @@ public class OpsGenieHandler : IOpsGenieHandler
     private readonly string _serviceUrl;
     private readonly string _channelId;
     private readonly IMySqlAdapter _mySqlAdapter;
+    private readonly ICardBuilder _cardBuilder;
 
-    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration, IMySqlAdapter mySqlAdapter)
+    public OpsGenieHandler(ILogger<OpsGenieHandler> logger, IConfiguration configuration, IMySqlAdapter mySqlAdapter, ICardBuilder cardBuilder)
     {
 
         _logger = logger;
@@ -50,6 +31,7 @@ public class OpsGenieHandler : IOpsGenieHandler
         _serviceUrl = configuration["ServiceUrl"];
         _channelId = configuration["ChannelId"];
         _mySqlAdapter = mySqlAdapter;
+        _cardBuilder = cardBuilder;
     }
 
     public string SendMessageAsync(string serviceUrl, string channelId, AlertData message)
@@ -63,7 +45,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                 return string.Empty; // exists in the db already
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-            var newCard = NewCardBuilder(message);
+            var newCard = _cardBuilder.BuildCard(message);
             //var cardAttachment = BuildNotificationCard(_unackedCard, message);
 
             var activity = new Activity
@@ -100,14 +82,16 @@ public class OpsGenieHandler : IOpsGenieHandler
         {
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
-            var cardAttachment = message.Status switch
+            var card = _cardBuilder.BuildCard(message);
+            card = message.Status switch
             {
-                "Acknowledged" => BuildNotificationCard(_ackedCard, message),
-                "Unacknowledge" => BuildNotificationCard(_unackedCard, message),
-                "Closed" => BuildNotificationCard(_closedCard, message),
-                _ => BuildNotificationCard(_unackedCard, message) // default case
+                "Acknowledged" => _cardBuilder.AddUnAckButton(card, message),
+                "Unacknowledge" => _cardBuilder.AddAckButton(card, message)
             };
 
+            card = _cardBuilder.AddNoteButton(card, message);
+            card = _cardBuilder.AddCloseButton(card, message);
+            card = _cardBuilder.AddIncidentButton(card, message);
 
             var activity = new Activity
             {
@@ -116,7 +100,7 @@ public class OpsGenieHandler : IOpsGenieHandler
                 ChannelId = channelId,
                 Conversation = new ConversationAccount(id: channelId)
             };
-            activity.Attachments = new List<Attachment>() { cardAttachment };
+            activity.Attachments = new List<Attachment>() { card };
             activity.Id = conversationId;
             connectorClient.Conversations.UpdateActivityAsync(activity);
             Console.WriteLine(result);
@@ -126,123 +110,6 @@ public class OpsGenieHandler : IOpsGenieHandler
         {
             _logger.LogError($"{ex.Message} - {ex.InnerException} -{ex.StackTrace}");
         }
-    }
-
-    private Attachment BuildNotificationCard(string filePath, object myData)
-    {
-        var adaptiveCardJson = File.ReadAllText(filePath);
-        var template = new AdaptiveCardTemplate(adaptiveCardJson);
-        string cardJson = template.Expand(myData);
-
-        var adaptiveCardAttachment = new Attachment()
-        {
-            ContentType = "application/vnd.microsoft.card.adaptive",
-            Content = JsonConvert.DeserializeObject(cardJson)
-        };
-
-        return adaptiveCardAttachment;
-    }
-
-    private Attachment NewCardBuilder(AlertData myData)
-    {
-        AdaptiveCard card = new AdaptiveCard()
-        {
-            Body = new List<AdaptiveElement>()
-        {
-            new AdaptiveColumnSet()
-            {
-                Speak = "OpsGenie Alert",
-                Columns = new List<AdaptiveColumn>()
-                {
-                    new AdaptiveColumn()
-                    {
-                        Width = "auto",
-                        Items = new List<AdaptiveElement>()
-                        {
-                            new AdaptiveImage()
-                            {
-                                UrlString = "https://play-lh.googleusercontent.com/Gg8C7Pam7AWPzD2JJMMqo5VSixKzEFcXD78P0_ibyeyjKC3-pLTlOtieuCmpBDo2-w",
-                                Size = AdaptiveImageSize.Small,
-                                Style = AdaptiveImageStyle.Person
-                            }
-                        }
-                    },
-                    new AdaptiveColumn()
-                    {
-                        Width = "2",
-                        Items = new List<AdaptiveElement>()
-                        {
-                            new AdaptiveTextBlock()
-                            {
-                                Text = $"[{myData.Message}](https://opsg.in/a/i/lstrk/${myData.UnifiedAlertId})",
-                                Weight = AdaptiveTextWeight.Bolder,
-                                Spacing = AdaptiveSpacing.None
-                            }
-                        }
-                    }
-                }
-            },
-            new AdaptiveTextBlock()
-            {
-                Text = $"{myData.Description}",
-                Wrap = true
-            },
-            new AdaptiveFactSet()
-            {
-                Facts = new List<AdaptiveFact>()
-                {
-                    new AdaptiveFact() { Title = "Priority: ", Value = $"{myData.Priority}" },
-                    new AdaptiveFact() { Title = "Status: ", Value = $"{myData.Status}" },
-                    new AdaptiveFact() { Title = "Source: ", Value = $"{myData.Source}" }
-                }
-            }
-        },
-            Actions = new List<AdaptiveAction>()
-        {
-            new AdaptiveSubmitAction()
-            {
-                Title = "Acknowledge",
-                DataJson = $"{{\"type\": \"Ack\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
-
-            },
-            new AdaptiveSubmitAction()
-            {
-                Title = "Close",
-                DataJson = $"{{\"type\": \"Close`\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
-
-            },
-            new AdaptiveOpenUrlAction()
-            {
-                Title = "Add Note",
-                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            },
-            new AdaptiveOpenUrlAction()
-            {
-                Title = "Snooze",
-                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            },
-            new AdaptiveOpenUrlAction()
-            {
-                Title = "Incident",
-                UrlString = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            }
-        }
-        };
-        
-        Attachment attachment = new Attachment()
-        {
-            ContentType = AdaptiveCard.ContentType,
-            Content = card
-        };
-        var x = attachment.Content as AdaptiveCard;
-        x.Actions.Add(new AdaptiveSubmitAction()
-        {
-            Title = "UnAcknowledge",
-            DataJson = $"{{\"type\": \"UnAck\", \"alertId\": \"{myData.UnifiedAlertId}\"}}"
-
-        });
-        attachment.Content = x;
-        return attachment;
     }
 
 

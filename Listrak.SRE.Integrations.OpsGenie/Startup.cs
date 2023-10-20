@@ -59,6 +59,7 @@ namespace Listrak.SRE.Integrations.OpsGenie
             services.AddSingleton<IOpsGenieHandler, OpsGenieHandler>();
             services.AddTransient<IBot, TeamsHandler>();
             services.AddSingleton<IMySqlAdapter, MySqlAdapter>();
+            services.AddSingleton<ICardBuilder, CardBuilder>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
