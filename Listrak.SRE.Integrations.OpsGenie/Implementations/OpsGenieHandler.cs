@@ -83,12 +83,18 @@ public class OpsGenieHandler : IOpsGenieHandler
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
             var card = _cardBuilder.BuildCard(message);
-            card = message.Status switch
-            {
-                "Acknowledged" => _cardBuilder.AddUnAckButton(card, message),
-                "Unacknowledge" => _cardBuilder.AddAckButton(card, message)
-            };
+            _logger.LogError($"Update Request Status - {message.Status}");
 
+            switch (message.Status.ToLower())
+            {
+                case "acknowledged":
+                    _cardBuilder.AddUnAckButton(card, message);
+                    break;
+
+                case "new":
+                    _cardBuilder.AddAckButton(card, message);
+                    break;
+            }
             card = _cardBuilder.AddNoteButton(card, message);
             card = _cardBuilder.AddCloseButton(card, message);
             card = _cardBuilder.AddIncidentButton(card, message);
