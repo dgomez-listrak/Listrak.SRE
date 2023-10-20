@@ -46,7 +46,10 @@ public class OpsGenieHandler : IOpsGenieHandler
             var credentials = new MicrosoftAppCredentials(_appId, _appPassword);
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
             var newCard = _cardBuilder.BuildCard(message);
-            //var cardAttachment = BuildNotificationCard(_unackedCard, message);
+            newCard = _cardBuilder.AddAckButton(newCard, message);
+            newCard = _cardBuilder.AddCloseButton(newCard, message);
+            newCard = _cardBuilder.AddNoteButton(newCard, message);
+            newCard = _cardBuilder.AddIncidentButton(newCard, message);
 
             var activity = new Activity
             {
@@ -84,6 +87,11 @@ public class OpsGenieHandler : IOpsGenieHandler
             var connectorClient = new ConnectorClient(new Uri(serviceUrl), credentials);
             var card = _cardBuilder.BuildCard(message);
             _logger.LogError($"Update Request Status - {message.Status}");
+
+            // So for add note and probably closed status comes through as updated, we'll need
+            // to see if it's been acked or not. Unsure if the API call will provide that
+            // we'll need to make sure to update mysql as well, thinking of some kind of cron job to regularly check
+            // ticket statuses and update accordingly if they're not
 
             switch (message.Status.ToLower())
             {
