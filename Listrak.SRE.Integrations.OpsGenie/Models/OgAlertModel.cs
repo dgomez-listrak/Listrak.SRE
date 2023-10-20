@@ -23,6 +23,7 @@ namespace Listrak.SRE.Integrations.OpsGenie.Models
         public string Status { get; set; }
         public string Source { get; set; }
         public string ConversationId { get; set; }
+        public bool Ackwnowledged { get; set; }
 
         // This is a convenience property to unify alertId and id
         public string UnifiedAlertId => AlertIdFromAlert ?? IdFromData;
